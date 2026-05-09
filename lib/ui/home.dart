@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'widgets.dart';
 import 'player.dart';
 import 'api_service.dart';
-import 'account.dart'; // Untuk navigasi riwayat/favorit
+import 'account.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,12 +13,10 @@ class _HomePageState extends State<HomePage> {
   List dramas = [];
   Map? bannerData;
   bool isLoading = true;
-  
   String selectedPlatform = 'melolo';
   String selectedCategory = 'Dubbing'; // Default Dubbing
 
   final List<String> platforms = ["Melolo", "FreeReels", "FlickReels", "RapidTV"];
-  // Urutan Dubbing Paling Depan
   final List<String> categories = ["Dubbing", "Populer", "New", "Trending", "Segera Hadir"];
 
   @override
@@ -33,14 +31,10 @@ class _HomePageState extends State<HomePage> {
       setState(() { bannerData = bannerRes['data'][0]; });
     }
 
-    // 2. Ambil List Drama dengan Logika Filter
-    String path;
-    if (selectedCategory == "Dubbing") {
-      // Jika Dubbing, kita tembak API Search otomatis
-      path = "/api/v2/search?category_p=${selectedPlatform.toLowerCase()}&q=sulih suara&lang=id";
-    } else {
-      path = "/api/v2/home?category_p=${selectedPlatform.toLowerCase()}&lang=id";
-    }
+    // 2. Ambil List Drama (Logika Dubbing tembak Search)
+    String path = (selectedCategory == "Dubbing")
+        ? "/api/v2/search?category_p=${selectedPlatform.toLowerCase()}&q=sulih suara&lang=id"
+        : "/api/v2/home?category_p=${selectedPlatform.toLowerCase()}&lang=id";
 
     final res = await ApiService.get(path);
     if (res != null && res['success'] == true) {
@@ -58,7 +52,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D1117),
         elevation: 0,
-        title: const Text("Livego", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.blueAccent)),
+        title: const Text("Livego", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
         actions: [
           IconButton(icon: const Icon(Icons.history), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const HistoryPage()))),
           IconButton(icon: const Icon(Icons.favorite_border), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const FavoritePage()))),
@@ -68,11 +62,11 @@ class _HomePageState extends State<HomePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildDynamicBanner(),
+            _buildBanner(),
             const Divider(color: Colors.white10, thickness: 1, indent: 15, endIndent: 15),
-            _buildHorizontalList(platforms, selectedPlatform, (v) { setState(() => selectedPlatform = v); _fetchAllData(); }, const Color(0xFF8B5CF6)),
+            _buildHList(platforms, selectedPlatform, (v) { setState(() => selectedPlatform = v); _fetchAllData(); }, const Color(0xFF8B5CF6)),
             const SizedBox(height: 10),
-            _buildHorizontalList(categories, selectedCategory, (v) { setState(() => selectedCategory = v); _fetchAllData(); }, Colors.blueAccent),
+            _buildHList(categories, selectedCategory, (v) { setState(() => selectedCategory = v); _fetchAllData(); }, Colors.blueAccent),
             const SizedBox(height: 15),
             isLoading ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) : _buildGrid(isTV),
             const SizedBox(height: 50),
@@ -82,8 +76,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildDynamicBanner() {
-    if (bannerData == null) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator()));
+  Widget _buildBanner() {
+    if (bannerData == null) return const SizedBox(height: 200);
     return Container(
       margin: const EdgeInsets.all(15), height: 210,
       child: TVButton(
@@ -102,7 +96,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHorizontalList(List<String> list, String selected, Function(String) onSel, Color color) {
+  Widget _buildHList(List<String> list, String selected, Function(String) onSel, Color color) {
     return SizedBox(height: 42, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 15), itemCount: list.length, itemBuilder: (context, i) => Padding(padding: const EdgeInsets.only(right: 10), child: TVButton(borderRadius: 25, onTap: () => onSel(list[i]), child: Container(padding: const EdgeInsets.symmetric(horizontal: 25), alignment: Alignment.center, decoration: BoxDecoration(color: selected == list[i] ? color : Colors.white10, borderRadius: BorderRadius.circular(25)), child: Text(list[i], style: const TextStyle(fontSize: 12)))))));
   }
 
@@ -114,6 +108,6 @@ class _HomePageState extends State<HomePage> {
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
   @override Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: const TextField(autofocus: true, decoration: InputDecoration(hintText: "Cari Dracin Dubbing...", border: InputBorder.none))), body: const Center(child: Text("Hasil Pencarian")));
+    return Scaffold(appBar: AppBar(title: const TextField(autofocus: true, decoration: InputDecoration(hintText: "Cari Dracin...", border: InputBorder.none))), body: const Center(child: Text("Cari drama favorit Anda")));
   }
 }
