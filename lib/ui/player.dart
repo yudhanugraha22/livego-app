@@ -1,39 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import 'package:chewie/chewie.dart';
 import 'widgets.dart';
 import 'api_service.dart';
-
-class DetailPage extends StatefulWidget {
-  final String id, source;
-  const DetailPage({super.key, required this.id, required this.source});
-  @override State<DetailPage> createState() => _DetailPageState();
-}
-
-class _DetailPageState extends State<DetailPage> {
-  Map? d; bool loading = true;
-  @override void initState() { super.initState(); load(); }
-
-  load() async {
-    final path = "/api/v2/detail?category_p=${widget.source}&id=${widget.id}&lang=id";
-    final res = await ApiService.get(path);
-    if (res != null) setState(() { d = res['data']; loading = false; });
-  }
-
-  @override Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(backgroundColor: const Color(0xFF161B22), title: Text(d?['title'] ?? "Loading...")),
-      body: loading ? const Center(child: CircularProgressIndicator()) : ListView(children: [
-        Image.network(d!['cover'], height: 250, fit: BoxFit.cover),
-        Padding(padding: const EdgeInsets.all(15), child: Text(d!['synopsis'], style: const TextStyle(color: Colors.grey))),
-        const Padding(padding: EdgeInsets.all(15), child: Text("DAFTAR EPISODE", style: TextStyle(fontWeight: FontWeight.bold))),
-        GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.all(15), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, mainAxisSpacing: 10, crossAxisSpacing: 10), itemCount: d!['total_episodes'], itemBuilder: (c, i) => TVButton(onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (ctx) => PlayerPage(id: widget.id, source: widget.source, ep: (i+1).toString())));
-        }, child: Container(color: Colors.white10, alignment: Alignment.center, child: Text("${i+1}"))))
-      ]),
-    );
-  }
-}
 
 class PlayerPage extends StatefulWidget {
   final String id, source, ep;
@@ -42,21 +11,54 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage> {
-  VideoPlayerController? _v; ChewieController? _c; bool ready = false;
-  @override void initState() { super.initState(); load(); }
+  VideoPlayerController? _v;
+  bool showMenu = false;
+  bool showEps = false;
 
-  load() async {
-    final path = "/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=${widget.ep}&lang=id";
-    final res = await ApiService.get(path);
-    if (res != null && res['success'] == true) {
-      String videoUrl = res['data']['streams'][0]['url'];
-      _v = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-      await _v!.initialize();
-      _c = ChewieController(videoPlayerController: _v!, autoPlay: true, materialProgressColors: ChewieProgressColors(playedColor: Colors.blueAccent));
-      setState(() => ready = true);
+  @override void initState() { super.initState(); _init(); }
+  _init() async {
+    final res = await ApiService.get("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=${widget.ep}&lang=id");
+    if (res != null) {
+      _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))
+        ..initialize().then((_) => setState(() { _v!.play(); }));
     }
   }
 
-  @override void dispose() { _v?.dispose(); _c?.dispose(); super.dispose(); }
-  @override Widget build(BuildContext context) { return Scaffold(backgroundColor: Colors.black, body: ready ? Chewie(controller: _c!) : const Center(child: CircularProgressIndicator())); }
+  @override void dispose() { _v?.dispose(); super.dispose(); }
+
+  void _handleKey(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final key = event.logicalKey;
+      if (key == LogicalKeyboardKey.select || key == LogicalKeyboardKey.enter) {
+        _v!.value.isPlaying ? _v!.pause() : _v!.play();
+      } else if (key == LogicalKeyboardKey.arrowRight) {
+        _v!.seekTo(_v!.value.position + const Duration(seconds: 10));
+      } else if (key == LogicalKeyboardKey.arrowLeft) {
+        _v!.seekTo(_v!.value.position - const Duration(seconds: 10));
+      } else if (key == LogicalKeyboardKey.arrowUp) {
+        setState(() { showMenu = !showMenu; showEps = false; });
+      } else if (key == LogicalKeyboardKey.arrowDown) {
+        setState(() { showEps = !showEps; showMenu = false; });
+      }
+      setState(() {});
+    }
+  }
+
+  @override Widget build(BuildContext context) {
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      autofocus: true,
+      onKeyEvent: _handleKey,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Stack(
+          children: [
+            Center(child: _v != null && _v!.value.isInitialized ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator()),
+            if (showMenu) Positioned(top: 0, left: 0, right: 0, child: Container(color: Colors.black54, height: 80, child: const Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [Text("NEXT"), Text("CC"), Text("1080P"), Text("FAV")]))),
+            if (showEps) Positioned(bottom: 0, left: 0, right: 0, child: Container(color: Colors.black87, height: 120, child: ListView.builder(scrollDirection: Axis.horizontal, itemCount: 50, itemBuilder: (c,i)=>Container(width: 60, margin: const EdgeInsets.all(10), color: Colors.white10, child: Center(child: Text("${i+1}")))))),
+          ],
+        ),
+      ),
+    );
+  }
 }

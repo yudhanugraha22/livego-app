@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class TVButton extends StatefulWidget {
   final Widget child;
@@ -13,10 +14,14 @@ class _TVButtonState extends State<TVButton> {
   @override Widget build(BuildContext context) {
     return Focus(
       onFocusChange: (f) => setState(() => _isF = f),
-      onKey: (node, event) {
-        if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-          widget.onTap();
-          return KeyEventResult.handled;
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select || 
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.gameButtonA) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
