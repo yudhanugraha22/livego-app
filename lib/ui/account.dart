@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 import 'widgets.dart';
 
 class AccountPage extends StatefulWidget {
@@ -10,35 +8,19 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  String nav = "Otomatis (Ikuti Hardware)";
-  String drm = "Auto";
-  bool bgPoster = true;
-  bool useCache = true;
-  bool rotasi = true;
+  List<String> favorites = [];
+  List<String> history = [];
 
-  @override void initState() { super.initState(); _load(); }
+  @override void initState() { super.initState(); _loadData(); }
 
   _load() async {
     final p = await SharedPreferences.getInstance();
     setState(() {
-      nav = p.getString('nav') ?? "Otomatis (Ikuti Hardware)";
-      drm = p.getString('drm') ?? "Auto";
-      bgPoster = p.getBool('bg') ?? true;
-      useCache = p.getBool('cache') ?? true;
-      rotasi = p.getBool('rot') ?? true;
+      favorites = p.getStringList('livego_favs') ?? [];
+      history = p.getStringList('livego_history') ?? [];
     });
   }
-
-  _save(String k, dynamic v) async {
-    final p = await SharedPreferences.getInstance();
-    if (v is String) p.setString(k, v); else p.setBool(k, v);
-  }
-
-  Future<void> _clearCache() async {
-    final dir = await getTemporaryDirectory();
-    if (dir.existsSync()) { dir.deleteSync(recursive: true); }
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cache Berhasil Dibersihkan")));
-  }
+  _loadData() => _load();
 
   @override Widget build(BuildContext context) {
     return Scaffold(
@@ -46,41 +28,55 @@ class _AccountPageState extends State<AccountPage> {
       body: ListView(padding: const EdgeInsets.all(15), children: [
         const SizedBox(height: 50),
         _header(),
-        const SizedBox(height: 20),
-        _label("KOLEKSI"),
+        const SizedBox(height: 25),
+        _label("KOLEKSI CEPAT"),
         _card([
-          _item(Icons.history, "Riwayat", "Lihat tontonan terakhir", () {}),
-          _item(Icons.favorite, "Favorit", "Drama yang disimpan", () {}),
+          _item(context, Icons.history, "Riwayat", "${history.length} Judul", () => _goList("Riwayat", history)),
+          _item(context, Icons.favorite, "Favorit", "${favorites.length} Judul", () => _goList("Favorit", favorites)),
         ]),
         _label("PENGATURAN SYSTEM"),
         _card([
-          _item(Icons.settings, "Navigasi Hardware", nav, _showNav),
-          _switch(Icons.image, "Tampilkan Background Poster", bgPoster, (v){ setState(()=>bgPoster=v); _save('bg',v); }),
-          _switch(Icons.cached, "Gunakan Cache Playback", useCache, (v){ setState(()=>useCache=v); _save('cache',v); }),
-          _switch(Icons.screen_rotation, "Tombol Rotasi Manual", rotasi, (v){ setState(()=>rotasi=v); _save('rot',v); }),
-          _item(Icons.lock, "Widevine DRM", drm, _showDRM),
-          _item(Icons.delete_sweep, "Hapus Semua Cache", "Klik untuk bersihkan", _clearCache),
+          _item(context, Icons.settings, "Navigasi", "Otomatis", (){}),
+          _item(Icons.lock, "Widevine DRM", "Auto", (){}),
         ]),
       ]),
     );
   }
 
-  void _showNav() => _dialog("Navigasi", ["Otomatis (Ikuti Hardware)", "Smartphone / Tablet", "Android TV"], nav, (v){ setState(()=>nav=v); _save('nav',v); });
-  void _showDRM() => _dialog("Widevine DRM", ["Auto", "Paksa L3", "Berhenti L3"], drm, (v){ setState(()=>drm=v); _save('drm',v); });
-
-  void _dialog(String t, List<String> o, String g, Function(String) s) {
-    showDialog(context: context, builder: (c) => AlertDialog(
-      title: Text(t), backgroundColor: const Color(0xFF161B22),
-      content: Column(mainAxisSize: MainAxisSize.min, children: o.map((v) => RadioListTile(
-        title: Text(v, style: const TextStyle(fontSize: 14)), value: v, groupValue: g,
-        onChanged: (x){ s(x!); Navigator.pop(c); }
-      )).toList()),
-    ));
+  void _goList(String t, List<String> items) {
+    Navigator.push(context, MaterialPageRoute(builder: (c) => ListDataPage(title: t, items: items)));
   }
 
   Widget _header() => Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: const Row(children: [CircleAvatar(backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.person, color: Colors.white)), SizedBox(width: 15), Text("User Penggemar", style: TextStyle(fontWeight: FontWeight.bold))]));
   Widget _label(String t) => Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)));
   Widget _card(List<Widget> i) => Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), margin: const EdgeInsets.only(bottom: 20), child: Column(children: i));
-  Widget _item(IconData i, String t, String s, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t, style: const TextStyle(fontSize: 14)), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
-  Widget _switch(IconData i, String t, bool v, Function(bool) c) => TVButton(onTap: () => c(!v), child: SwitchListTile(secondary: Icon(i, color: Colors.white70), title: Text(t, style: const TextStyle(fontSize: 14)), value: v, onChanged: c, activeColor: Colors.blueAccent));
+  Widget _item(BuildContext ctx, IconData i, String t, String s, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
+}
+
+class ListDataPage extends StatefulWidget {
+  final String title; final List<String> items;
+  const ListDataPage({super.key, required this.title, required this.items});
+  @override State<ListDataPage> createState() => _ListDataPageState();
+}
+
+class _ListDataPageState extends State<ListDataPage> {
+  late List<String> currentItems;
+  @override void initState() { super.initState(); currentItems = List.from(widget.items); }
+
+  _delete(int i) async {
+    final p = await SharedPreferences.getInstance();
+    setState(() { currentItems.removeAt(i); });
+    String key = widget.title == "Favorit" ? 'livego_favs' : 'livego_history';
+    await p.setStringList(key, currentItems);
+  }
+
+  @override Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(widget.title), backgroundColor: const Color(0xFF161B22)),
+      body: currentItems.isEmpty ? const Center(child: Text("Kosong")) : ListView.builder(
+        itemCount: currentItems.length,
+        itemBuilder: (c, i) => ListTile(title: Text(currentItems[i]), trailing: IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _delete(i))),
+      ),
+    );
+  }
 }
