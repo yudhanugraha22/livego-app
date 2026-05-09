@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
 import 'widgets.dart';
 import 'api_service.dart';
-
 class PlayerPage extends StatefulWidget {
   final String id, source, title;
   const PlayerPage({super.key, required this.id, required this.source, required this.title});
@@ -21,26 +19,11 @@ class _PlayerPageState extends State<PlayerPage> {
     }
   }
   _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
-  
-  void _handleRemote(KeyEvent e) {
-    if (e is KeyDownEvent) {
-      setState(()=>ui=true); _startT();
-      final k = e.logicalKey;
-      if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) { _v!.value.isPlaying ? _v!.pause() : _v!.play(); }
-      else if (k == LogicalKeyboardKey.arrowRight) { _v!.seekTo(_v!.value.position + const Duration(seconds: 10)); }
-      else if (k == LogicalKeyboardKey.arrowLeft) { _v!.seekTo(_v!.value.position - const Duration(seconds: 10)); }
-    }
-  }
-
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
   @override Widget build(BuildContext context) {
-    return KeyboardListener(focusNode: FocusNode(), autofocus: true, onKeyEvent: _handleRemote, child: Scaffold(backgroundColor: Colors.black, body: Stack(children: [
-      Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator(color: Colors.blueAccent)),
-      if (ui && ready) Positioned(bottom: 30, left: 40, right: 40, child: Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.blueAccent.withOpacity(0.3))), child: Column(mainAxisSize: MainAxisSize.min, children: [
-        VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.pinkAccent)),
-        const SizedBox(height: 15),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [Icon(Icons.skip_previous), Icon(Icons.play_arrow, size: 40), Icon(Icons.skip_next), Text("AUTO"), Icon(Icons.list)])
-      ]))),
+    return Scaffold(backgroundColor: Colors.black, body: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
+      Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator()),
+      if (ui && ready) Positioned(bottom: 30, left: 40, right: 40, child: Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: Colors.blueAccent.withOpacity(0.3))), child: Column(mainAxisSize: MainAxisSize.min, children: [VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.pinkAccent)), const SizedBox(height: 15), Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [Icon(Icons.skip_previous), Icon(Icons.play_arrow, size: 40), Icon(Icons.skip_next), Text("AUTO"), Icon(Icons.list)])]))),
     ])));
   }
 }
