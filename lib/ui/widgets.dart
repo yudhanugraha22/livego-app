@@ -26,10 +26,10 @@ class _TVButtonState extends State<TVButton> {
           duration: const Duration(milliseconds: 150),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.borderRadius),
-            border: Border.all(color: _isF ? Colors.blueAccent : Colors.transparent, width: 3.5),
-            boxShadow: _isF ? [BoxShadow(color: Colors.blueAccent.withOpacity(0.8), blurRadius: 15)] : [],
+            border: Border.all(color: _isF ? Colors.blueAccent : Colors.transparent, width: 3.0),
+            boxShadow: _isF ? [BoxShadow(color: Colors.blueAccent.withOpacity(0.7), blurRadius: 15)] : [],
           ),
-          transform: _isF ? (Matrix4.identity()..scale(1.05)) : Matrix4.identity(),
+          transform: _isF ? (Matrix4.identity()..scale(1.04)) : Matrix4.identity(),
           child: widget.child,
         ),
       ),
