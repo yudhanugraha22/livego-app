@@ -10,6 +10,6 @@ dependencies:
   video_player: ^2.8.1
   chewie: ^1.7.1
   path_provider: ^2.1.1
-  crypto: ^3.0.3 # MESIN HMAC UNTUK DIRECT API
+  crypto: ^3.0.3
 flutter:
   uses-material-design: true
