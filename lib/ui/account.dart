@@ -6,23 +6,19 @@ class AccountPage extends StatefulWidget {
   @override State<AccountPage> createState() => _AccountPageState();
 }
 class _AccountPageState extends State<AccountPage> {
-  String navType = "Otomatis"; String drmMode = "Auto";
+  String drm = "Auto"; bool cache = true;
   @override void initState() { super.initState(); _L(); }
-  _L() async { final p = await SharedPreferences.getInstance(); setState(() { navType = p.getString('navType') ?? "Otomatis"; drmMode = p.getString('drmMode') ?? "Auto"; }); }
+  _L() async { final p = await SharedPreferences.getInstance(); setState(() => drm = p.getString('drm') ?? "Auto"); }
   @override Widget build(BuildContext context) {
     return Scaffold(backgroundColor: const Color(0xFF0D1117), body: ListView(padding: const EdgeInsets.all(15), children: [
       const SizedBox(height: 50),
-      _card([const ListTile(leading: CircleAvatar(backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.person, color: Colors.white)), title: Text("User Penggemar"), subtitle: Text("Akun Livego Premium"))]),
-      const SizedBox(height: 20),
-      _label("PENGATURAN SYSTEM"),
-      _card([
-        _item(Icons.settings, "Navigasi Hardware", navType, (){}),
-        _item(Icons.lock, "Widevine DRM", drmMode, (){}),
-        _item(Icons.layers, "Kelola Sumber Data", "24 API", (){}),
-      ]),
+      Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: const ListTile(leading: CircleAvatar(backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.play_arrow, color: Colors.white)), title: Text("User Penggemar"), subtitle: Text("Livego Premium"))),
+      const SizedBox(height: 25),
+      _group("PENGATURAN", [ _item(Icons.lock, "Widevine DRM", drm), _switch(Icons.cached, "Gunakan Cache", cache, (v)=>setState(()=>cache=v)) ]),
+      _group("KOLEKSI", [ _item(Icons.history, "Riwayat", "Lihat"), _item(Icons.favorite, "Favorit", "Lihat") ]),
     ]));
   }
-  _label(String t) => Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)));
-  _card(List<Widget> i) => Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), margin: const EdgeInsets.only(bottom: 20), child: Column(children: i));
-  _item(IconData i, String t, String s, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t, style: const TextStyle(fontSize: 14)), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
+  Widget _group(String t, List<Widget> i) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))), Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), margin: const EdgeInsets.only(bottom: 20), child: Column(children: i))]);
+  Widget _item(IconData i, String t, String s) => TVButton(onTap: (){}, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
+  Widget _switch(IconData i, String t, bool v, Function(bool) c) => TVButton(onTap: () => c(!v), child: SwitchListTile(secondary: Icon(i, color: Colors.blueAccent), title: Text(t), value: v, onChanged: c, activeColor: Colors.blueAccent));
 }

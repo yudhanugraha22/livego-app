@@ -14,6 +14,7 @@ class MainNavigation extends StatefulWidget {
 }
 class _MainNavigationState extends State<MainNavigation> {
   int _idx = 0;
+  final _p = [const HomePage(), const Center(child: Text("Unduhan")), const AccountPage()];
   @override Widget build(BuildContext context) {
     bool isT = MediaQuery.of(context).size.width > 900;
     return Scaffold(body: Row(children: [
@@ -22,7 +23,7 @@ class _MainNavigationState extends State<MainNavigation> {
         const SizedBox(height: 30),
         IconButton(icon: Icon(Icons.person, color: _idx==2?Colors.blue:Colors.grey), onPressed: ()=>setState(()=>_idx=2))
       ])),
-      Expanded(child: IndexedStack(index: _idx, children: [HomePage(), const Center(child: Text("Halaman Unduhan")), AccountPage()])),
+      Expanded(child: IndexedStack(index: _idx, children: _p)),
     ]), bottomNavigationBar: isT ? null : BottomNavigationBar(currentIndex: _idx, onTap: (i)=>setState(()=>_idx=i), backgroundColor: const Color(0xFF161B22), selectedItemColor: Colors.blueAccent, items: const [BottomNavigationBarItem(icon: Icon(Icons.home), label: "HOME"), BottomNavigationBarItem(icon: Icon(Icons.download), label: "UNDUHAN"), BottomNavigationBarItem(icon: Icon(Icons.person), label: "AKUN")]));
   }
 }
