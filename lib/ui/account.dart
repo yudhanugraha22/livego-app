@@ -8,13 +8,18 @@ class AccountPage extends StatefulWidget {
 }
 
 class _AccountPageState extends State<AccountPage> {
-  List<String> favs = []; List<String> hist = [];
+  String nav = "Otomatis", drm = "Auto";
+  bool bg = true, cache = true, rot = true;
+
   @override void initState() { super.initState(); _L(); }
   _L() async {
     final p = await SharedPreferences.getInstance();
     setState(() {
-      favs = p.getStringList('livego_favs') ?? [];
-      hist = p.getStringList('livego_history') ?? [];
+      nav = p.getString('nav') ?? "Otomatis";
+      drm = p.getString('drm') ?? "Auto";
+      bg = p.getBool('bg') ?? true;
+      cache = p.getBool('cache') ?? true;
+      rot = p.getBool('rot') ?? true;
     });
   }
 
@@ -25,24 +30,19 @@ class _AccountPageState extends State<AccountPage> {
         const SizedBox(height: 50),
         _header(),
         const SizedBox(height: 25),
-        _label("KOLEKSI CEPAT"),
-        _card([
-          _item(context, Icons.history, "Riwayat", "${hist.length} Judul", () {}),
-          _item(context, Icons.favorite, "Favorit", "${favs.length} Judul", () {}),
+        _group("KOLEKSI CEPAT", [
+          _item(Icons.history, "Riwayat", "Tontonan terakhir", () {}),
+          _item(Icons.favorite_border, "Favorit", "Drama tersimpan", () {}),
         ]),
-        _label("PENGATURAN SYSTEM"),
-        _card([
-          _item(context, Icons.settings, "Navigasi", "Otomatis", () {}),
-          _item(context, Icons.lock, "Widevine DRM", "Auto", () {}),
+        _group("PENGATURAN SYSTEM", [
+          _item(Icons.settings_suggest, "Navigasi Hardware", nav, () {}),
+          _item(Icons.lock_outline, "Widevine DRM", drm, () {}),
+          _item(Icons.delete_sweep, "Hapus Semua Cache", "Bersihkan memori", () {}),
         ]),
       ]),
     );
   }
-
-  Widget _header() => Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: const Row(children: [CircleAvatar(backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.person, color: Colors.white)), SizedBox(width: 15), Text("User Penggemar", style: TextStyle(fontWeight: FontWeight.bold))]));
-  Widget _label(String t) => Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold)));
-  Widget _card(List<Widget> i) => Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), margin: const EdgeInsets.only(bottom: 20), child: Column(children: i));
-  
-  // FIX: Sekarang parameter sudah sinkron (5 argumen)
-  Widget _item(BuildContext ctx, IconData i, String t, String s, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t, style: const TextStyle(fontSize: 14)), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
+  Widget _header() => Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: const Row(children: [CircleAvatar(backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.person, color: Colors.white)), SizedBox(width: 15), Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("User Penggemar", style: TextStyle(fontWeight: FontWeight.bold)), Text("Akun Livego", style: TextStyle(color: Colors.grey, fontSize: 12))])]));
+  Widget _group(String t, List<Widget> i) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.bold))), Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), margin: const EdgeInsets.only(bottom: 20), child: Column(children: i))]);
+  Widget _item(IconData i, String t, String s, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t, style: const TextStyle(fontSize: 14)), subtitle: Text(s, style: const TextStyle(fontSize: 11, color: Colors.grey)), trailing: const Icon(Icons.chevron_right, size: 16)));
 }
