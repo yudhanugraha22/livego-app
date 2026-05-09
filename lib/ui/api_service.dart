@@ -9,21 +9,11 @@ class ApiService {
   static Future<dynamic> get(String path) async {
     String ts = DateTime.now().millisecondsSinceEpoch.toString();
     String payload = "GET:$path:$ts";
-    
     var key = utf8.encode(secret);
-    var bytes = utf8.encode(payload);
-    var hmacSha256 = Hmac(sha256, key);
-    var digest = hmacSha256.convert(bytes);
-
+    var digest = Hmac(sha256, key).convert(utf8.encode(payload));
     try {
-      final response = await http.get(
-        Uri.parse(baseUrl + path),
-        headers: {
-          "X-Timestamp": ts,
-          "X-Signature": digest.toString(),
-        },
-      );
-      if (response.statusCode == 200) return json.decode(response.body);
+      final r = await http.get(Uri.parse(baseUrl + path), headers: {"X-Timestamp": ts, "X-Signature": digest.toString()});
+      if (r.statusCode == 200) return json.decode(r.body);
     } catch (e) { return null; }
     return null;
   }
