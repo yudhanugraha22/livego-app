@@ -2,152 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
 import 'widgets.dart';
+import 'api_service.dart';
 
 class PlayerPage extends StatefulWidget {
   final String id, source, title;
   const PlayerPage({super.key, required this.id, required this.source, required this.title});
-
   @override State<PlayerPage> createState() => _PlayerPageState();
 }
-
 class _PlayerPageState extends State<PlayerPage> {
-  VideoPlayerController? _controller;
-  bool _isReady = false;
-  bool _showUI = true;
-  Timer? _hideTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVideo();
+  VideoPlayerController? _v; Map? d; bool ready = false; bool ui = true; Timer? _t;
+  @override void initState() { super.initState(); _init(); }
+  _init() async {
+    final res = await ApiService.get("/api/v2/detail?category_p=${widget.source}&id=${widget.id}&lang=id");
+    if (res != null) { d = res['data']; _load(1); }
   }
-
-  Future<void> _loadVideo() async {
-    // TODO: Ganti dengan API call kamu
-    final videoUrl = "https://example.com/sample-video.mp4"; // sementara
-
-    _controller = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-    await _controller!.initialize();
-    
-    setState(() {
-      _isReady = true;
-      _controller!.play();
-      _startHideTimer();
-    });
-
-    _controller!.addListener(() => setState(() {}));
+  _load(int ep) async {
+    setState(() => ready = false);
+    final res = await ApiService.get("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=$ep&lang=id");
+    if (res != null) { _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); }); }
   }
-
-  void _startHideTimer() {
-    _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) setState(() => _showUI = false);
-    });
+  _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
+  @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
+  @override Widget build(BuildContext context) {
+    double h = MediaQuery.of(context).size.height;
+    return Scaffold(backgroundColor: Colors.black, body: d == null ? const Center(child: CircularProgressIndicator()) : Column(children: [
+      SizedBox(height: h * 0.45, child: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
+        Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator()),
+        if (ui && ready) Positioned(bottom: 20, left: 20, right: 20, child: Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(25), border: Border.all(color: Colors.blueAccent.withOpacity(0.3))), child: Column(mainAxisSize: MainAxisSize.min, children: [
+          VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.pinkAccent)),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [const Icon(Icons.skip_previous), IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow), onPressed: (){setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play());}), const Icon(Icons.skip_next), IconButton(icon: const Icon(Icons.list), onPressed: _showEps)])
+        ])))
+      ]))),
+      Expanded(child: GridView.builder(padding: const EdgeInsets.all(10), gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 6, mainAxisSpacing: 5, crossAxisSpacing: 5), itemCount: d!['total_episodes'], itemBuilder: (c, i) => TVButton(onTap: ()=>_load(i+1), child: Container(color: Colors.white10, alignment: Alignment.center, child: Text("${i+1}", style: const TextStyle(fontSize: 10))))))
+    ]));
   }
-
-  void _toggleUI() {
-    setState(() => _showUI = !_showUI);
-    if (_showUI) _startHideTimer();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _toggleUI,
-        child: Stack(
-          children: [
-            Center(
-              child: _isReady && _controller != null
-                  ? AspectRatio(
-                      aspectRatio: _controller!.value.aspectRatio,
-                      child: VideoPlayer(_controller!),
-                    )
-                  : const CircularProgressIndicator(),
-            ),
-
-            if (_showUI && _isReady) _buildOverlay(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOverlay() {
-    return Stack(
-      children: [
-        // Back Button
-        Positioned(
-          top: 40,
-          left: 20,
-          child: TVButton(
-            onTap: () => Navigator.pop(context),
-            child: const CircleAvatar(
-              backgroundColor: Colors.black54,
-              child: Icon(Icons.arrow_back, color: Colors.white),
-            ),
-          ),
-        ),
-
-        // Bottom Controls
-        Positioned(
-          bottom: 30,
-          left: 20,
-          right: 20,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D2A4F).withOpacity(0.95),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                VideoProgressIndicator(
-                  _controller!,
-                  allowScrubbing: true,
-                  colors: const VideoProgressColors(
-                    playedColor: Colors.pinkAccent,
-                    bufferedColor: Colors.white24,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    IconButton(icon: const Icon(Icons.skip_previous), onPressed: () {}),
-                    IconButton(
-                      iconSize: 48,
-                      icon: Icon(
-                        _controller!.value.isPlaying ? Icons.pause : Icons.play_arrow,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _controller!.value.isPlaying
-                              ? _controller!.pause()
-                              : _controller!.play();
-                        });
-                      },
-                    ),
-                    IconButton(icon: const Icon(Icons.skip_next), onPressed: () {}),
-                    const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold)),
-                    const Icon(Icons.list),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  @override
-  void dispose() {
-    _hideTimer?.cancel();
-    _controller?.dispose();
-    super.dispose();
-  }
+  void _showEps() => showModalBottomSheet(context: context, backgroundColor: const Color(0xFF161B22), builder: (c)=>ListView.builder(itemCount: d!['total_episodes'], itemBuilder: (ctx, i)=>ListTile(title: Text("Eps ${i+1}"), onTap: (){Navigator.pop(c); _load(i+1);})) );
 }

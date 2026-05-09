@@ -4,42 +4,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
         with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Setup Flutter 3.22.0
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.22.0'
-
-      - name: Fresh Android Initialization
+          channel: 'stable'
+      - name: Setup Project
         run: |
-          # Hapus folder android lama yang bikin error
-          rm -rf android
-          # Paksa Flutter buat folder android baru yang support Gradle terbaru
           flutter create --platforms android --org com.yudhanugraha .
-          
-      - name: Inject Google TV & Logo Support
-        run: |
-          # Tambahkan kategori Leanback agar muncul di Google TV
-          sed -i '/android.intent.category.LAUNCHER/a \                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />' android/app/src/main/AndroidManifest.xml
-          # Izinkan koneksi HTTP agar bisa tes lokal jika perlu
           sed -i 's/<application/ <application android:usesCleartextTraffic="true" /' android/app/src/main/AndroidManifest.xml
-
-      - name: Install Dependencies
-        run: flutter pub get
-
-      - name: Build APK Universal
-        run: flutter build apk --release --no-tree-shake-icons
-
-      - name: Upload APK Result
-        uses: actions/upload-artifact@v4
+          sed -i '/android.intent.category.LAUNCHER/a \                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />' android/app/src/main/AndroidManifest.xml
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
         with:
           name: livego-apk
           path: build/app/outputs/flutter-apk/app-release.apk
