@@ -8,25 +8,15 @@ class ApiService {
 
   static Future<dynamic> get(String path) async {
     String ts = DateTime.now().millisecondsSinceEpoch.toString();
-    String payload = "GET:\$path:\$ts";
-    
-    // Proses HMAC-SHA256 sesuai instruksi dokumentasi API
+    String payload = "GET:$path:$ts";
     var key = utf8.encode(secret);
     var bytes = utf8.encode(payload);
     var hmacSha256 = Hmac(sha256, key);
     var digest = hmacSha256.convert(bytes);
-
-    final response = await http.get(
-      Uri.parse(baseUrl + path),
-      headers: {
-        "X-Timestamp": ts,
-        "X-Signature": digest.toString(),
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    }
+    try {
+      final response = await http.get(Uri.parse(baseUrl + path), headers: {"X-Timestamp": ts, "X-Signature": digest.toString()});
+      if (response.statusCode == 200) return json.decode(response.body);
+    } catch (e) { return null; }
     return null;
   }
 }
