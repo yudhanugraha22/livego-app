@@ -13,3 +13,5 @@ dependencies:
   crypto: ^3.0.3
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
