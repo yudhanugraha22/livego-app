@@ -36,7 +36,7 @@ class _HomePageState extends State<HomePage> {
         _list(plats, selS, (v){ setState(()=>selS=v.toLowerCase()); fetch(); }, const Color(0xFF8B5CF6)),
         const SizedBox(height: 10),
         _list(cats, selC, (v){ setState(()=>selC=v); fetch(); }, Colors.blueAccent),
-        loading ? const Center(child: CircularProgressIndicator()) : GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: isT?7:4, childAspectRatio: 0.65, crossAxisSpacing: 10, mainAxisSpacing: 10), itemCount: ds.length, itemBuilder: (c, i) => TVButton(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => DetailPage(id: ds[i]['id'], source: selS))), child: Column(children: [Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(ds[i]['cover'], fit: BoxFit.cover))), Text(ds[i]['title'], maxLines:1, style: const TextStyle(fontSize: 10))]))),
+        loading ? const Center(child: CircularProgressIndicator()) : GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: isT?7:4, childAspectRatio: 0.65, crossAxisSpacing: 10, mainAxisSpacing: 10), itemCount: ds.length, itemBuilder: (c, i) => TVButton(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (ctx) => PlayerPage(id: ds[i]['id'], source: selS))), child: Column(children: [Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(ds[i]['cover'], fit: BoxFit.cover))), Text(ds[i]['title'], maxLines:1, style: const TextStyle(fontSize: 10))]))),
       ])),
     );
   }
