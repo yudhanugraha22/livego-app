@@ -16,10 +16,12 @@ class PlayerPage extends StatefulWidget {
 
 class _PlayerPageState extends State<PlayerPage> {
   VideoPlayerController? _v;
-  Map? d;
-  bool loading = true;
+  Map? dramaData;
+  Map? videoData;
+  bool isLoaded = false;
   bool showUI = true;
   int currentEp = 1;
+  String currentQuality = "Auto";
   Timer? _hideTimer;
 
   @override
@@ -30,53 +32,52 @@ class _PlayerPageState extends State<PlayerPage> {
 
   _initData() async {
     final p = await SharedPreferences.getInstance();
-    // Gunakan episode yang dikirim, atau ambil dari memori terakhir nonton
     currentEp = widget.ep != null ? int.parse(widget.ep!) : (p.getInt('pos_ep_${widget.id}') ?? 1);
+    currentQuality = p.getString('pref_quality') ?? "Auto";
 
     final res = await ApiService.get("/api/v2/detail?category_p=${widget.source}&id=${widget.id}&lang=id");
     if (res != null) {
-      setState(() { d = res['data']; });
-      _playVideo(currentEp);
+      setState(() { dramaData = res['data']; });
+      _loadStream(currentEp);
     }
   }
 
-  _playVideo(int ep) async {
-    setState(() { loading = true; currentEp = ep; });
-    final p = await SharedPreferences.getInstance();
-
-    // --- LOGIKA HAPUS CACHE EPS LAMA (PATEN) ---
-    for (int i = 1; i < ep; i++) {
-      p.remove('pos_time_${widget.id}_$i');
-    }
-
+  _loadStream(int ep) async {
+    setState(() { isLoaded = false; currentEp = ep; });
     final res = await ApiService.get("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=$ep&lang=id");
     
     if (res != null && res['success']) {
+      videoData = res['data'];
+      List streams = videoData!['streams'];
+      
+      // Cari URL sesuai kualitas pilihan user, jika tidak ada pakai index 0
+      var selectedStream = streams.firstWhere(
+        (s) => s['quality'].toString().toLowerCase() == currentQuality.toLowerCase(),
+        orElse: () => streams[0],
+      );
+
       if (_v != null) await _v!.dispose();
-      _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))
+      _v = VideoPlayerController.networkUrl(Uri.parse(selectedStream['url']))
         ..initialize().then((_) {
           setState(() { 
-            loading = false; 
+            isLoaded = true; 
             _v!.play(); 
             _startTimer();
           });
         });
       
       _v!.addListener(() {
-        if (_v!.value.isPlaying) {
-          p.setInt('pos_time_${widget.id}_$ep', _v!.value.position.inSeconds);
-          p.setInt('pos_ep_${widget.id}', ep);
-        }
         if (_v!.value.position >= _v!.value.duration && _v!.value.duration != Duration.zero) {
           _nextEp();
         }
+        setState(() {});
       });
     }
   }
 
   void _nextEp() {
-    if (currentEp < (d?['total_episodes'] ?? 0)) {
-      _playVideo(currentEp + 1);
+    if (currentEp < (dramaData?['total_episodes'] ?? 0)) {
+      _loadStream(currentEp + 1);
     } else {
       Navigator.pop(context);
     }
@@ -89,51 +90,92 @@ class _PlayerPageState extends State<PlayerPage> {
     });
   }
 
-  void _toggleUI() {
-    setState(() => showUI = !showUI);
-    if (showUI) _startTimer();
+  void _showQualityDialog() {
+    if (videoData == null) return;
+    List streams = videoData!['streams'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Pilih Kualitas", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: streams.map((s) {
+            String q = s['quality'].toString();
+            return RadioListTile(
+              title: Text(q, style: const TextStyle(color: Colors.white)),
+              value: q,
+              groupValue: currentQuality,
+              activeColor: Colors.blueAccent,
+              onChanged: (val) async {
+                final p = await SharedPreferences.getInstance();
+                await p.setString('pref_quality', val.toString());
+                setState(() { currentQuality = val.toString(); });
+                Navigator.pop(context);
+                _loadStream(currentEp); // Muat ulang video dengan kualitas baru
+              },
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showCCDialog() {
+    if (videoData == null) return;
+    List subs = videoData!['subtitles'];
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Pilih Audio / Subtitle", style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: subs.map((s) => ListTile(
+            title: Text(s['language'], style: const TextStyle(color: Colors.white)),
+            leading: const Icon(Icons.subtitles, color: Colors.blueAccent),
+            onTap: () => Navigator.pop(context),
+          )).toList(),
+        ),
+      ),
+    );
   }
 
   @override
-  void dispose() {
-    _v?.dispose();
-    _hideTimer?.cancel();
-    super.dispose();
-  }
+  void dispose() { _v?.dispose(); _hideTimer?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
-    bool isTV = MediaQuery.of(context).size.width > 900;
-
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: _toggleUI,
-        child: Stack(
+      backgroundColor: Colors.black, // Anti blank putih
+      body: dramaData == null 
+      ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent))
+      : Stack(
           children: [
-            // 1. LAYER VIDEO FULL SCREEN
             Center(
-              child: _v != null && _v!.value.isInitialized
-                  ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!))
-                  : const CircularProgressIndicator(color: Colors.blueAccent),
+              child: isLoaded 
+              ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!))
+              : const CircularProgressIndicator(color: Colors.blueAccent),
             ),
 
-            // 2. OVERLAY KONTROL (HP & TV)
             if (showUI) ...[
-              // Header: Judul & Back
+              // Header Info
               Positioned(
                 top: 0, left: 0, right: 0,
                 child: Container(
-                  padding: const EdgeInsets.only(top: 40, left: 10),
+                  padding: const EdgeInsets.only(top: 40, left: 10, bottom: 20),
                   decoration: const BoxDecoration(gradient: LinearGradient(colors: [Colors.black87, Colors.transparent], begin: Alignment.topCenter, end: Alignment.bottomCenter)),
                   child: Row(children: [
                     IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
-                    Expanded(child: Text("${d?['title'] ?? ''} - Eps $currentEp", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), overflow: TextOverflow.ellipsis)),
+                    Expanded(child: Text("${dramaData!['title']} - Eps $currentEp", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
                   ]),
                 ),
               ),
 
-              // Tombol Play/Pause Tengah
+              // Tombol Tengah
               Center(
                 child: IconButton(
                   icon: Icon(_v != null && _v!.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled, size: 80, color: Colors.white60),
@@ -141,85 +183,40 @@ class _PlayerPageState extends State<PlayerPage> {
                 ),
               ),
 
-              // Panel Kontrol Bawah (Identik CineFlow)
+              // Control Bar Bawah
               Positioned(
                 bottom: 20, left: 15, right: 15,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Progress Bar Biru/Pink
                     VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.blueAccent, bufferedColor: Colors.white24, backgroundColor: Colors.white12)),
                     const SizedBox(height: 15),
-                    
-                    // Barisan Tombol Fitur
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _actionIcon(Icons.skip_previous, "PREV", () { if(currentEp > 1) _playVideo(currentEp - 1); }),
-                        _actionIcon(Icons.skip_next, "NEXT", _nextEp),
-                        _actionIcon(Icons.subtitles, "CC", () {}),
-                        _actionText("AUTO", () {}),
-                        _actionIcon(Icons.favorite_border, "FAV", () {}),
-                        _actionIcon(Icons.format_list_bulleted, "EPS", _showEpisodeSheet),
+                        _btn(Icons.skip_previous, "PREV", () { if(currentEp > 1) _loadStream(currentEp - 1); }),
+                        _btn(Icons.skip_next, "NEXT", _nextEp),
+                        _btn(Icons.subtitles, "CC", _showCCDialog),
+                        _btnText(currentQuality, _showQualityDialog),
+                        _btn(Icons.favorite_border, "FAV", () {}),
+                        _btn(Icons.format_list_bulleted, "EPS", () {}),
                       ],
                     ),
                   ],
                 ),
               ),
             ],
-            
-            if (loading) const Center(child: CircularProgressIndicator(color: Colors.blueAccent)),
           ],
         ),
-      ),
     );
   }
 
-  Widget _actionIcon(IconData i, String label, VoidCallback tap) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      IconButton(icon: Icon(i, color: Colors.white, size: 28), onPressed: tap),
-      Text(label, style: const TextStyle(fontSize: 9, color: Colors.white70)),
-    ],
-  );
+  Widget _btn(IconData i, String l, VoidCallback t) => Column(mainAxisSize: MainAxisSize.min, children: [IconButton(icon: Icon(i, color: Colors.white, size: 28), onPressed: t), Text(l, style: const TextStyle(fontSize: 9, color: Colors.white70))]);
+  Widget _btnText(String txt, VoidCallback t) => Column(mainAxisSize: MainAxisSize.min, children: [TextButton(onPressed: t, child: Text(txt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))), const Text("QUALITY", style: TextStyle(fontSize: 9, color: Colors.white70))]);
+}
 
-  Widget _actionText(String txt, VoidCallback tap) => Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      TextButton(onPressed: tap, child: Text(txt, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12))),
-      const Text("QUAL", style: TextStyle(fontSize: 9, color: Colors.white70)),
-    ],
-  );
-
-  // DAFTAR EPISODE SLIDE UP
-  void _showEpisodeSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF161B22),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const Text("PILIH EPISODE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-            const Divider(color: Colors.white10),
-            Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 5, mainAxisSpacing: 10, crossAxisSpacing: 10),
-                itemCount: d?['total_episodes'] ?? 0,
-                itemBuilder: (c, i) => InkWell(
-                  onTap: () { Navigator.pop(context); _playVideo(i + 1); },
-                  child: Container(
-                    decoration: BoxDecoration(color: (i + 1) == currentEp ? Colors.blueAccent : Colors.white10, borderRadius: BorderRadius.circular(10)),
-                    alignment: Alignment.center,
-                    child: Text("${i + 1}", style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class DetailPage extends StatelessWidget {
+  final String id, source;
+  const DetailPage({super.key, required this.id, required this.source});
+  @override Widget build(BuildContext context) { return PlayerPage(id: id, source: source); }
 }
