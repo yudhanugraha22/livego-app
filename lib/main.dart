@@ -102,3 +102,18 @@ class AccountPage extends StatelessWidget {
   Widget _group(String t, List<Widget> i) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))), Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: Column(children: i)), const SizedBox(height: 20)]);
   Widget _item(IconData i, String t) => TVButton(onTap: (){}, child: ListTile(leading: Icon(i, color: Colors.white70), title: Text(t), trailing: const Icon(Icons.chevron_right, size: 16)));
 }
+
+class AccountPage extends StatelessWidget {
+  const AccountPage({super.key});
+  @override Widget build(BuildContext context) {
+    return Scaffold(body: ListView(padding: const EdgeInsets.all(15), children: [
+      const SizedBox(height: 50),
+      Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(25)), child: Column(children: [Row(children: [const CircleAvatar(radius: 35, backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.play_arrow, color: Colors.white, size: 40)), const SizedBox(width: 15), const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("User Penggemar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), Text("Akun CineFlow", style: TextStyle(color: Colors.grey))])]), const SizedBox(height: 15), Row(children: [ _btn("Telegram"), const SizedBox(width: 10), _btn("WhatsApp") ])])),
+      const SizedBox(height: 25),
+      _group("KOLEKSI CEPAT", [ _item(Icons.history, "Riwayat"), _item(Icons.favorite_border, "Favorit"), _item(Icons.settings, "Pengaturan") ]),
+    ]));
+  }
+  Widget _btn(String t) => Container(padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), color: Colors.white10), child: Text(t, style: const TextStyle(fontSize: 12)));
+  Widget _group(String t, List<Widget> i) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey))), Container(decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: Column(children: i)), const SizedBox(height: 20)]);
+  Widget _item(IconData i, String t) => TVButton(onTap: (){}, child: ListTile(leading: Icon(i, color: Colors.white70), title: Text(t), trailing: const Icon(Icons.chevron_right, size: 16)));
+}
