@@ -8,7 +8,8 @@ class ApiService {
     var sig = Hmac(sha256, utf8.encode(secret)).convert(utf8.encode("GET:$path:$ts"));
     try {
       final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), headers: {"X-Timestamp": ts, "X-Signature": sig.toString()});
-      return r.statusCode == 200 ? json.decode(r.body) : null;
+      if (r.statusCode == 200) return json.decode(r.body);
     } catch (e) { return null; }
+    return null;
   }
 }
