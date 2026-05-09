@@ -55,7 +55,7 @@ class _AccountPageState extends State<AccountPage> {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(25)),
     child: Row(children: [
-      const CircleAvatar(radius: 35, backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.play_arrow, color: Colors.white, size: 40)),
+      const CircleAvatar(radius: 35, backgroundColor: Color(0xFF8B5CF6), child: Icon(Icons.person, color: Colors.white, size: 40)),
       const SizedBox(width: 15),
       const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text("User Penggemar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -66,8 +66,6 @@ class _AccountPageState extends State<AccountPage> {
 
   Widget _label(String t) => Padding(padding: const EdgeInsets.only(left: 10, bottom: 8), child: Text(t, style: const TextStyle(fontSize: 11, color: Colors.grey)));
   Widget _card(List<Widget> i) => Container(margin: const EdgeInsets.only(bottom: 20), decoration: BoxDecoration(color: const Color(0xFF161B22), borderRadius: BorderRadius.circular(20)), child: Column(children: i));
-  
-  // FIX PARAMETER: Sekarang menerima 4 data sesuai pemanggilan
   Widget _item(BuildContext context, IconData i, String t, VoidCallback c) => TVButton(onTap: c, child: ListTile(leading: Icon(i, color: Colors.blueAccent), title: Text(t, style: const TextStyle(fontSize: 14)), trailing: const Icon(Icons.chevron_right, size: 16)));
 }
 

@@ -10,16 +10,33 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List dramas = []; bool isLoading = true;
-  String selectedPlatform = 'melolo';
+  List dramas = [];
+  Map? bannerData;
+  bool isLoading = true;
+  String selectedPlatform = 'Melolo';
+  String selectedCategory = 'Dubbing'; 
+
   final List<String> platforms = ["Melolo", "FreeReels", "FlickReels", "RapidTV"];
+  final List<String> categories = ["Dubbing", "Populer", "New", "Trending", "Segera Hadir"];
 
-  @override void initState() { super.initState(); _fetch(); }
+  @override
+  void initState() { super.initState(); _fetchAllData(); }
 
-  _fetch() async {
-    setState(() => isLoading = true);
-    final res = await ApiService.get("/api/v2/home?category_p=${selectedPlatform.toLowerCase()}&lang=id");
-    if (res != null) setState(() { dramas = res['data']; isLoading = false; });
+  _fetchAllData() async {
+    setState(() { isLoading = true; });
+    final bannerRes = await ApiService.get("/api/v2/banner?category_p=${selectedPlatform.toLowerCase()}&lang=id");
+    if (bannerRes != null && bannerRes['success'] == true && bannerRes['data'].isNotEmpty) {
+      setState(() { bannerData = bannerRes['data'][0]; });
+    }
+    String path = (selectedCategory == "Dubbing")
+        ? "/api/v2/search?category_p=${selectedPlatform.toLowerCase()}&q=sulih suara&lang=id"
+        : "/api/v2/home?category_p=${selectedPlatform.toLowerCase()}&lang=id";
+    final res = await ApiService.get(path);
+    if (res != null && res['success'] == true) {
+      setState(() { dramas = res['data']; isLoading = false; });
+    } else {
+      setState(() => isLoading = false);
+    }
   }
 
   @override
@@ -28,9 +45,8 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF0D1117),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D1117),
+        backgroundColor: const Color(0xFF161B22),
         elevation: 0,
-        centerTitle: false, // Menghilangkan teks Cineflow di pojok kiri
         title: const Text("Livego", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent)),
         actions: [
           IconButton(icon: const Icon(Icons.history), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (c) => const HistoryPage()))),
@@ -38,13 +54,40 @@ class _HomePageState extends State<HomePage> {
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
         ],
       ),
-      body: Column(children: [
-        const SizedBox(height: 10),
-        SizedBox(height: 50, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.only(left: 15), itemCount: platforms.length, itemBuilder: (c, i) => Padding(padding: const EdgeInsets.only(right: 8), child: TVButton(onTap: () { setState(() => selectedPlatform = platforms[i]); _fetch(); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 20), alignment: Alignment.center, decoration: BoxDecoration(color: selectedPlatform == platforms[i] ? const Color(0xFF8B5CF6) : Colors.white10, borderRadius: BorderRadius.circular(20)), child: Text(platforms[i])))))),
-        Expanded(child: isLoading ? const Center(child: CircularProgressIndicator()) : GridView.builder(padding: const EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: isTV ? 7 : 4, childAspectRatio: 0.65, crossAxisSpacing: 10, mainAxisSpacing: 10), itemCount: dramas.length, itemBuilder: (c, i) => TVButton(onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (c) => DetailPage(id: dramas[i]['id'], source: selectedPlatform.toLowerCase())));
-        }, child: Column(children: [Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(dramas[i]['cover'], fit: BoxFit.cover))), Text(dramas[i]['title'], maxLines: 1, style: const TextStyle(fontSize: 10))]))))
-      ]),
+      body: SingleChildScrollView(
+        child: Column(children: [
+          _buildBanner(),
+          const Divider(color: Colors.white10, thickness: 1, indent: 15, endIndent: 15),
+          _buildHList(platforms, selectedPlatform, (v) { setState(() => selectedPlatform = v); _fetchAllData(); }, const Color(0xFF8B5CF6)),
+          const SizedBox(height: 10),
+          _buildHList(categories, selectedCategory, (v) { setState(() => selectedCategory = v); _fetchAllData(); }, Colors.blueAccent),
+          const SizedBox(height: 15),
+          isLoading ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) : _buildGrid(isTV),
+          const SizedBox(height: 50),
+        ]),
+      ),
     );
   }
+
+  Widget _buildBanner() {
+    if (bannerData == null) return const SizedBox(height: 200);
+    return Container(
+      margin: const EdgeInsets.all(15), height: 200,
+      child: TVButton(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => DetailPage(id: bannerData!['id'], source: selectedPlatform.toLowerCase()))),
+        child: Stack(children: [
+          ClipRRect(borderRadius: BorderRadius.circular(20), child: Image.network(bannerData!['cover'], fit: BoxFit.cover, width: double.infinity)),
+          Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), gradient: LinearGradient(begin: Alignment.bottomCenter, end: Alignment.topCenter, colors: [Colors.black.withOpacity(0.9), Colors.transparent]))),
+          Padding(padding: const EdgeInsets.all(15), child: Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(bannerData!['title'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(bannerData!['synopsis'] ?? "", maxLines: 2, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          ])),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildHList(List<String> list, String selected, Function(String) onSel, Color color) => SizedBox(height: 42, child: ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 15), itemCount: list.length, itemBuilder: (ctx, i) => Padding(padding: const EdgeInsets.only(right: 10), child: TVButton(borderRadius: 25, onTap: () => onSel(list[i]), child: Container(padding: const EdgeInsets.symmetric(horizontal: 25), alignment: Alignment.center, decoration: BoxDecoration(color: selected == list[i] ? color : Colors.white10, borderRadius: BorderRadius.circular(25)), child: Text(list[i], style: const TextStyle(fontSize: 12)))))));
+
+  Widget _buildGrid(bool isTV) => GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: isTV ? 7 : 4, childAspectRatio: 0.62, crossAxisSpacing: 10, mainAxisSpacing: 10), itemCount: dramas.length, itemBuilder: (c, i) => TVButton(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => DetailPage(id: dramas[i]['id'], source: selectedPlatform.toLowerCase()))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image.network(dramas[i]['cover'], fit: BoxFit.cover, width: double.infinity))), const SizedBox(height: 5), Text(dramas[i]['title'], maxLines: 1, style: const TextStyle(fontSize: 9))])));
 }
