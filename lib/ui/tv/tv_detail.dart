@@ -1,12 +1,14 @@
-import "../widgets/adaptive_video_player.dart";
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
+import '../../core/services/cache_service.dart';
 import '../../data/models/drama_model.dart';
-import '../../data/models/episode_model.dart';
 import '../../data/repositories/drama_repository.dart';
+import '../widgets/adaptive_video_player.dart';
+import '../widgets/resume_prompt_dialog.dart';
 
 class TvDetail extends StatefulWidget {
   final DramaModel drama;
+
   const TvDetail({super.key, required this.drama});
 
   @override
@@ -18,6 +20,7 @@ class _TvDetailState extends State<TvDetail> {
   List<EpisodeModel> _episodes = [];
   bool _isLoading = true;
   int _focusedEpisodeIndex = 0;
+  final FocusNode _firstEpisodeFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -26,11 +29,66 @@ class _TvDetailState extends State<TvDetail> {
   }
 
   Future<void> _loadEpisodes() async {
-    final episodes = await _repository.getEpisodes(widget.drama.id);
+    final data = await _repository.getEpisodes(widget.drama.id);
     setState(() {
-      _episodes = episodes;
+      _episodes = data;
       _isLoading = false;
     });
+    // Berikan jeda sedikit agar UI ter-render, baru fokuskan tombol episode pertama
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (_firstEpisodeFocusNode.canRequestFocus) {
+        _firstEpisodeFocusNode.requestFocus();
+      }
+    });
+  }
+
+  // Fungsi pengecekan durasi tonton & pemanggilan Resume Prompt
+  Future<void> _handleEpisodeSelection(EpisodeModel episode) async {
+    final history = await CacheService.getHistory(widget.drama.id);
+
+    if (history != null && history.episodeId == episode.id && history.positionMs > 5000) {
+      // Jika ada progres tonton lebih dari 5 detik, tampilkan prompt kelanjutan
+      final minutes = (history.positionMs ~/ 60000).toString().padLeft(2, '0');
+      final seconds = ((history.positionMs % 60000) ~/ 1000).toString().padLeft(2, '0');
+      final formattedTime = "$minutes:$seconds";
+
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => ResumePromptDialog(
+            title: "Lanjutkan Tontonan?",
+            formattedTime: formattedTime,
+            onResume: () => _playVideo(episode, history.positionMs),
+            onRestart: () => _playVideo(episode, 0),
+          ),
+        );
+      }
+    } else {
+      // Jika tidak ada riwayat, langsung play dari awal (detik 0)
+      _playVideo(episode, 0);
+    }
+  }
+
+  void _playVideo(EpisodeModel episode, int startPositionMs) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdaptiveVideoPlayer(
+          videoUrl: episode.videoUrl ?? "",
+          dramaId: widget.drama.id,
+          episodeId: episode.id,
+          title: "${widget.drama.title} - ${episode.title}",
+          platform: widget.drama.platform,
+          isTv: true,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _firstEpisodeFocusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -39,156 +97,77 @@ class _TvDetailState extends State<TvDetail> {
       backgroundColor: const Color(0xFF090615),
       body: Row(
         children: [
-          // 1. Sisi Kiri: Poster Besar dengan Efek Glow Neon
+          // Bagian Kiri: Poster & Deskripsi Drama
           Container(
             width: 320,
-            padding: const EdgeInsets.all(32.0),
+            padding: const EdgeInsets.all(32),
+            color: const Color(0xFF0D0A1E),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  height: 380,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF00D9FF),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF00D9FF).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                const Icon(Icons.movie, color: Color(0xFF00D9FF), size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  widget.drama.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.drama.poster,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
-                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Sumber Platform: ${widget.drama.platform.toUpperCase()}",
+                  style: const TextStyle(color: Color(0xFFFF007F), fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Sinopsis singkat atau info drama di TV. Nikmati tontonan dengan resolusi penuh dan audio jernih yang dioptimalkan khusus sistem TV box Anda.",
+                  style: TextStyle(color: Colors.white54, fontSize: 12, height: 1.5),
                 ),
               ],
             ),
           ),
 
-          // 2. Sisi Kanan: Detail Informasi & Daftar Episode (Remote Friendly)
+          // Bagian Kanan: Daftar Episode Grid Ramah D-Pad
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 48, 48, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Back Button TV
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E1B30),
-                      foregroundColor: Colors.white,
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back, size: 16),
-                    label: const Text('Kembali'),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Judul & Badge Platform
-                  Row(
-                    children: [
-                      Text(
-                        widget.drama.title,
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: widget.drama.platform == 'CineFlow'
-                              ? const Color(0xFF00D9FF)
-                              : const Color(0xFFFF007F),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          widget.drama.platform,
-                          style: const TextStyle(
-                            color: Colors.black,
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(48.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "PILIH EPISODE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            letterSpacing: 1.5,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Rating Info
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 20),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${widget.drama.rating} / 10',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Text(
-                        'Total: ${widget.drama.totalEpisodes} Episode',
-                        style: const TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Sinopsis
-                  Text(
-                    widget.drama.description,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Section Title Episode
-                  const Text(
-                    'Pilih Episode (Gunakan D-Pad Remote)',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // List Episode Mendatar
-                  Expanded(
-                    child: _isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              childAspectRatio: 1.8,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
                             ),
-                          )
-                        : ListView.builder(
-                            scrollDirection: Axis.horizontal,
                             itemCount: _episodes.length,
                             itemBuilder: (context, index) {
-                              final ep = _episodes[index];
+                              final episode = _episodes[index];
                               final isFocused = _focusedEpisodeIndex == index;
 
                               return InkWell(
+                                focusNode: index == 0 ? _firstEpisodeFocusNode : null,
                                 onFocusChange: (hasFocus) {
                                   if (hasFocus) {
                                     setState(() {
@@ -196,36 +175,20 @@ class _TvDetailState extends State<TvDetail> {
                                     });
                                   }
                                 },
-                                onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => AdaptiveVideoPlayer(videoUrl: ep.videoUrl ?? "", dramaId: widget.drama.id, episodeId: ep.id, title: "${widget.drama.title} - ${ep.title}", platform: widget.drama.platform, isTv: true)));
-                                },
+                                onTap: () => _handleEpisodeSelection(episode),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
-                                  width: 140,
-                                  margin: const EdgeInsets.only(right: 16, bottom: 20),
                                   decoration: BoxDecoration(
-                                    color: isFocused
-                                        ? const Color(0xFF00D9FF)
-                                        : const Color(0xFF1E1B30),
+                                    color: isFocused ? const Color(0xFF00D9FF) : const Color(0xFF1E1B30),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isFocused
-                                          ? Colors.white
-                                          : Colors.white12,
+                                      color: isFocused ? Colors.white : Colors.white10,
                                       width: 2,
                                     ),
-                                    boxShadow: isFocused
-                                        ? [
-                                            BoxShadow(
-                                              color: const Color(0xFF00D9FF).withOpacity(0.4),
-                                              blurRadius: 10,
-                                            )
-                                          ]
-                                        : [],
                                   ),
                                   child: Center(
                                     child: Text(
-                                      ep.title,
+                                      episode.title,
                                       style: TextStyle(
                                         color: isFocused ? Colors.black : Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -237,10 +200,10 @@ class _TvDetailState extends State<TvDetail> {
                               );
                             },
                           ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
