@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import "tv_video_controls.dart";
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
@@ -112,7 +113,16 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
         child: _isInitialized && _chewieController != null
             ? AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Chewie(controller: _chewieController!),
+                child: Stack(
+                  children: [
+                    Chewie(controller: _chewieController!),
+                    if (widget.isTv)
+                      TvVideoControls(
+                        controller: _videoPlayerController,
+                        title: widget.title,
+                      ),
+                  ],
+                ),
               )
             : const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
