@@ -1,3 +1,5 @@
+// lib/ui/mobile/mobile_home.dart
+
 import 'package:flutter/material.dart';
 
 class MobileHome extends StatelessWidget {
@@ -5,12 +7,16 @@ class MobileHome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('LiveGo Mobile'),
+        backgroundColor: const Color(0xFF0F121D),
+      ),
+      body: const Center(
         child: Text(
-          'Mobile Home',
-          style: TextStyle(color: Colors.white, fontSize: 24),
+          'Mobile Home Screen\n(Under Development)',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
     );
