@@ -1,7 +1,6 @@
 name: livego_project
-description: "A new Flutter project for LiveGo/CineFlow TV and Mobile."
+description: "Livego - Bioskop Drama China Premium untuk HP dan TV."
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -10,23 +9,36 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # Koneksi Internet & Enkripsi Keamanan
-  dio: 5.4.0
-  crypto: 3.0.3
-
-  # Penyimpanan & Database Lokal (HP & TV)
-  shared_preferences: 2.2.2
-  sqflite: 2.3.0
-  path: ^1.9.0
-
-  # Media Video Player
-  video_player: 2.8.2
+  
+  # 1. State Management (Untuk sistem folder modular)
+  flutter_riverpod: ^2.5.1
+  
+  # 2. Koneksi Data & Keamanan (HMAC-SHA256)
+  http: ^1.1.0
+  crypto: ^3.0.3
+  
+  # 3. Penyimpanan Permanen (Simpan setelan 10 poin)
+  shared_preferences: ^2.2.2
+  
+  # 4. Mesin Pemutar Video (Gaya CineFlow)
+  video_player: ^2.8.1
+  chewie: ^1.7.1
+  
+  # 5. Performa & Gambar (Agar aplikasi ringan/tidak blank)
+  cached_network_image: ^3.3.1
+  path_provider: ^2.1.1
+  
+  # 6. Deteksi Perangkat (Logika HP vs Google TV)
+  device_info_plus: ^9.0.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
+
+  # 7. Folder Aset (Tempat taruh Logo Livego dan Background)
+  assets:
+    - assets/
