@@ -1,3 +1,4 @@
+import "mobile_history.dart";
 import "mobile_detail.dart";
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -62,8 +63,8 @@ class _MobileHomeState extends State<MobileHome> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
+            icon: const Icon(Icons.history, color: Colors.white),
+            onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => const MobileHistory())); },
           ),
         ],
       ),
