@@ -4,39 +4,37 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'core/services/storage_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inisialisasi penyimpanan lokal
+  await StorageService.init();
   
   // Deteksi jenis perangkat (HP atau TV)
   final deviceInfo = DeviceInfoPlugin();
   bool isTv = false;
 
   try {
-    if (RegExp(r'TV|Box|Player|Cast|Fire', caseSensitive: false).hasMatch(Uri.base.toString())) {
+    final androidInfo = await deviceInfo.androidInfo;
+    final systemFeatures = androidInfo.systemFeatures;
+    if (systemFeatures.contains('android.software.leanback') || 
+        androidInfo.hardware.toLowerCase().contains('tv') ||
+        androidInfo.model.toLowerCase().contains('tv')) {
       isTv = true;
-    } else {
-      final androidInfo = await deviceInfo.androidInfo;
-      final systemFeatures = androidInfo.systemFeatures;
-      if (systemFeatures.contains('android.software.leanback') || 
-          androidInfo.hardware.toLowerCase().contains('tv') ||
-          androidInfo.model.toLowerCase().contains('tv')) {
-        isTv = true;
-      }
     }
   } catch (e) {
-    // Default fallback jika gagal deteksi
     isTv = false;
   }
 
-  // Jika TV, kunci orientasi layar ke Landscape
+  // Atur orientasi layar secara cerdas
   if (isTv) {
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
   } else {
-    // Jika HP, kunci ke Portrait
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -60,8 +58,8 @@ class LiveGoApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F0C1B), // Background ungu gelap premium
-        primaryColor: const Color(0xFF00D9FF), // Cyan neon
+        scaffoldBackgroundColor: const Color(0xFF0F0C1B),
+        primaryColor: const Color(0xFF00D9FF),
       ),
       home: Scaffold(
         body: Center(
