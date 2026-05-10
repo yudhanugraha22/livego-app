@@ -130,7 +130,7 @@ class _MobilePlayerState extends State<MobilePlayer> {
 
   Widget _buildControlsOverlay() {
     return Container(
-      color: Colors.black40,
+      color: Colors.black.withOpacity(0.4),
       padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

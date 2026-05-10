@@ -110,7 +110,7 @@ class _TvPlayerState extends State<TvPlayer> {
         onKey: (event) {
           // Deteksi remote TV ditekan untuk memunculkan panel kontrol
           _triggerControls();
-          return KeyEventResult.ignored;
+          return;
         },
         child: _isLoading
             ? const Center(child: CircularProgressIndicator(color: Color(0xFF00D9FF)))
@@ -167,9 +167,9 @@ class _TvPlayerState extends State<TvPlayer> {
                 onKey: (node, event) {
                   if (event.logicalKey.keyLabel == 'Select' || event.logicalKey.keyLabel == 'Enter') {
                     _controller!.seekTo(_controller!.value.position - const Duration(seconds: 10));
-                    return KeyEventResult.handled;
+                    return;
                   }
-                  return KeyEventResult.ignored;
+                  return;
                 },
                 child: Builder(builder: (context) {
                   final hasFocus = Focus.of(context).hasFocus;
@@ -183,9 +183,9 @@ class _TvPlayerState extends State<TvPlayer> {
                     setState(() {
                       _controller!.value.isPlaying ? _controller!.pause() : _controller!.play();
                     });
-                    return KeyEventResult.handled;
+                    return;
                   }
-                  return KeyEventResult.ignored;
+                  return;
                 },
                 child: Builder(builder: (context) {
                   final hasFocus = Focus.of(context).hasFocus;
@@ -201,9 +201,9 @@ class _TvPlayerState extends State<TvPlayer> {
                 onKey: (node, event) {
                   if (event.logicalKey.keyLabel == 'Select' || event.logicalKey.keyLabel == 'Enter') {
                     _controller!.seekTo(_controller!.value.position + const Duration(seconds: 10));
-                    return KeyEventResult.handled;
+                    return;
                   }
-                  return KeyEventResult.ignored;
+                  return;
                 },
                 child: Builder(builder: (context) {
                   final hasFocus = Focus.of(context).hasFocus;
