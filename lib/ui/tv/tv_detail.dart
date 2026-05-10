@@ -1,3 +1,4 @@
+import '../../data/models/episode_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/services/cache_service.dart';

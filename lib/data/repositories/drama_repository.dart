@@ -91,4 +91,28 @@ class DramaRepository {
       ),
     );
   }
+
+  // Mengambil daftar drama populer (menggunakan fungsi getHomeContent bawaan Anda)
+  Future<List<DramaModel>> getPopularDramas() async {
+    try {
+      // Jika repository Anda menggunakan nama method berbeda (misal: getHome atau getDramas), 
+      // silakan ganti pemanggilan di bawah ini. Secara default kita panggil getHomeContent().
+      return await getHomeContent();
+    } catch (_) {
+      // Fallback jika terjadi error
+      return [];
+    }
+  }
+
+  // Mengambil daftar episode berdasarkan dramaId
+  Future<List<EpisodeModel>> getEpisodes(String dramaId) async {
+    try {
+      final detail = await getDramaDetail(dramaId);
+      // Menyesuaikan dengan variabel list episode di detail drama Anda
+      return detail.episodes ?? [];
+    } catch (_) {
+      return [];
+    }
+  }
+
 }
