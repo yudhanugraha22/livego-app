@@ -10,25 +10,25 @@ dependencies:
   flutter:
     sdk: flutter
   
-  # 1. State Management (Untuk sistem folder modular)
+  # State Management
   flutter_riverpod: ^2.5.1
   
-  # 2. Koneksi Data & Keamanan (HMAC-SHA256)
+  # Koneksi Data & Keamanan (HMAC-SHA256)
   http: ^1.1.0
   crypto: ^3.0.3
   
-  # 3. Penyimpanan Permanen (Simpan setelan 10 poin)
+  # Penyimpanan Permanen
   shared_preferences: ^2.2.2
   
-  # 4. Mesin Pemutar Video (Gaya CineFlow)
+  # Mesin Pemutar Video
   video_player: ^2.8.1
   chewie: ^1.7.1
   
-  # 5. Performa & Gambar (Agar aplikasi ringan/tidak blank)
+  # Performa & Gambar
   cached_network_image: ^3.3.1
   path_provider: ^2.1.1
   
-  # 6. Deteksi Perangkat (Logika HP vs Google TV)
+  # Deteksi Perangkat
   device_info_plus: ^9.0.2
 
 dev_dependencies:
@@ -38,7 +38,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # 7. Folder Aset (Tempat taruh Logo Livego dan Background)
-  assets:
-    - assets/
