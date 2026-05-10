@@ -7,9 +7,9 @@ class ApiService {
     String ts = DateTime.now().millisecondsSinceEpoch.toString();
     var sig = Hmac(sha256, utf8.encode(secret)).convert(utf8.encode("GET:$path:$ts"));
     try {
-      final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), headers: {"X-Timestamp": ts, "X-Signature": sig.toString()});
+      final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), headers: {"X-Timestamp": ts, "X-Signature": sig.toString(), "Accept": "application/json"}).timeout(const Duration(seconds: 15));
       if (r.statusCode == 200) return json.decode(r.body);
-    } catch (e) { return null; }
+    } catch (e) { print("Error API: $e"); }
     return null;
   }
 }
