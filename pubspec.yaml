@@ -18,7 +18,7 @@ dependencies:
   # Penyimpanan & Database Lokal (HP & TV)
   shared_preferences: 2.2.2
   sqflite: 2.3.0
-  path: 1.9.1
+  path: ^1.9.0
 
   # Media Video Player
   video_player: 2.8.2
