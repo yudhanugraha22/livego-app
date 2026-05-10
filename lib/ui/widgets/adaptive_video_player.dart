@@ -37,6 +37,10 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
   // State navigasi TV baru sesuai blueprint
   bool _showNavbar = false;
   bool _showEpisodeDrawer = false;
+  bool _showNextCountdown = false;
+  int _countdownSeconds = 5;
+  Timer? _countdownTimer;
+  bool _hasTriggeredNext = false;
   final FocusNode _tvInputNode = FocusNode();
 
   @override
@@ -94,7 +98,50 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
         positionMs: currentPosition,
         durationMs: totalDuration,
       );
+
+      // Cek apakah video sisa 5 detik lagi (5000 milidetik)
+      final remainingMs = totalDuration - currentPosition;
+      if (remainingMs <= 5000 && remainingMs > 0 && !_showNextCountdown && !_hasTriggeredNext) {
+        _startNextEpisodeCountdown();
+      }
     }
+  }
+
+  void _startNextEpisodeCountdown() {
+    setState(() {
+      _showNextCountdown = true;
+      _countdownSeconds = 5;
+    });
+
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      setState(() {
+        if (_countdownSeconds > 1) {
+          _countdownSeconds--;
+        } else {
+          timer.cancel();
+          _showNextCountdown = false;
+          _hasTriggeredNext = true;
+          _playNextEpisodeAutomatically();
+        }
+      });
+    });
+  }
+
+  void _playNextEpisodeAutomatically() {
+    // Fungsi ini akan mencari episode selanjutnya secara otomatis.
+    // Sementara kita simulasikan kembali memutar video atau memberikan sinyal selesai.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Memutar Episode Berikutnya..."),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   // Menangani input remote TV (D-Pad & Back Button) secara komprehensif
@@ -184,6 +231,7 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
     if (!widget.isTv) {
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     }
+    _countdownTimer?.cancel();
     _videoPlayerController.removeListener(_videoListener);
     _videoPlayerController.dispose();
     _chewieController?.dispose();
@@ -210,6 +258,44 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
                 // Drawer Episode TV (Laci Bawah)
                 if (widget.isTv && _showEpisodeDrawer)
                   _buildTvEpisodeDrawer(),
+
+                // Overlay Hitung Mundur Episode Selanjutnya (Next Episode Countdown)
+                if (_showNextCountdown)
+                  Positioned(
+                    bottom: widget.isTv ? 180 : 80,
+                    right: 24,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xEE0D0A1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFFF007F), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF007F).withOpacity(0.3),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.next_plan, color: Color(0xFFFF007F), size: 20),
+                          const SizedBox(width: 10),
+                          Text(
+                            "Next Episode in $_countdownSeconds s",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           )
