@@ -1,3 +1,4 @@
+import "../widgets/adaptive_video_player.dart";
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/drama_model.dart';
@@ -196,7 +197,7 @@ class _TvDetailState extends State<TvDetail> {
                                   }
                                 },
                                 onTap: () {
-                                  // Nanti diarahkan ke video player
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => AdaptiveVideoPlayer(videoUrl: ep.videoUrl ?? "", dramaId: widget.drama.id, episodeId: ep.id, title: "${widget.drama.title} - ${ep.title}", platform: widget.drama.platform, isTv: true)));
                                 },
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
