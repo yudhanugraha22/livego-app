@@ -1,10 +1,11 @@
-import "tv_settings.dart";
-import "tv_history.dart";
-import "tv_detail.dart";
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import '../../data/models/drama_model.dart';
 import '../../data/repositories/drama_repository.dart';
+import '../widgets/tv_sidebar_item.dart';
+import 'tv_detail.dart';
+import 'tv_history.dart';
+import 'tv_settings.dart';
 
 class TvHome extends StatefulWidget {
   const TvHome({super.key});
@@ -17,181 +18,290 @@ class _TvHomeState extends State<TvHome> {
   final DramaRepository _repository = DramaRepository();
   List<DramaModel> _dramas = [];
   bool _isLoading = true;
-  int _focusedIndex = 0;
+
+  // State Navigasi & Fokus
+  int _selectedMenuIndex = 0; // Default: Home (Index 0)
+  int _focusedGridIndex = 0;
+  final FocusNode _gridFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadDramas();
   }
 
-  Future<void> _loadData() async {
-    final dramas = await _repository.getDramas();
+  Future<void> _loadDramas() async {
+    final data = await _repository.getPopularDramas();
     setState(() {
-      _dramas = dramas;
+      _dramas = data;
       _isLoading = false;
     });
+  }
+
+  void _onMenuSelected(int index) {
+    setState(() {
+      _selectedMenuIndex = index;
+    });
+
+    // Navigasi menu berdasarkan index
+    switch (index) {
+      case 0: // Home
+        _loadDramas();
+        break;
+      case 2: // Continue Watching (Riwayat)
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const TvHistory()),
+        );
+        break;
+      case 5: // Settings / Profile (Sementara kita satukan ke Settings)
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const TvSettings()),
+        );
+        break;
+      default:
+        // Menu lainnya bisa disesuaikan nanti
+        break;
+    }
+  }
+
+  // Pindah fokus dari sidebar ke area grid drama (konten utama)
+  void _focusContentGrid() {
+    if (_dramas.isNotEmpty) {
+      _gridFocusNode.requestFocus();
+    }
+  }
+
+  @override
+  void dispose() {
+    _gridFocusNode.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF090615), // Sangat gelap, pas untuk TV besar
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
-              ),
-            )
-          : Row(
+      backgroundColor: const Color(0xFF090615),
+      body: Row(
+        children: [
+          // ================= SIDEBAR KIRI PREMIUM =================
+          Container(
+            width: 240,
+            color: const Color(0xFF0D0A1E),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Sidebar Navigasi Kiri (Khas Android TV)
-                Container(
-                  width: 80,
-                  color: const Color(0xFF0D0A1E),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                // 1. Logo App (Atas)
+                Padding(
+                  padding: const EdgeInsets.only(top: 28.0, left: 20.0, bottom: 20.0),
+                  child: Row(
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.home, color: Color(0xFF00D9FF), size: 30),
-                        onPressed: () {},
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00D9FF),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.black, size: 20),
                       ),
-                      const SizedBox(height: 32),
-                      IconButton(
-                        icon: const Icon(Icons.history, color: Colors.white38, size: 28),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TvHistory()));
-                        },
-                      ),
-                      const SizedBox(height: 32),
-                      IconButton(
-                        icon: const Icon(Icons.settings, color: Colors.white38, size: 28),
-                        onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TvSettings()));
-                        },
+                      const SizedBox(width: 10),
+                      const Text(
+                        "LIVEGO",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const Divider(color: Colors.white10, height: 1),
+                const SizedBox(height: 16),
 
-                // 2. Konten Utama Kanan
+                // 2. Daftar Menu Utama Sidebar (Sesuai Blueprint Anda)
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header Logo Premium
-                          const Row(
-                            children: [
-                              Text(
-                                'LIVEGO',
-                                style: TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 3,
-                                  color: Color(0xFF00D9FF),
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'TV BOOTCAMP',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white38,
-                                  letterSpacing: 2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 32),
+                  child: ListView(
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      TvSidebarItem(
+                        icon: Icons.home,
+                        label: "Home",
+                        isSelected: _selectedMenuIndex == 0,
+                        onTap: () => _onMenuSelected(0),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                      TvSidebarItem(
+                        icon: Icons.download,
+                        label: "Download",
+                        isSelected: _selectedMenuIndex == 1,
+                        onTap: () => _onMenuSelected(1),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                      TvSidebarItem(
+                        icon: Icons.history,
+                        label: "Continue Watching",
+                        isSelected: _selectedMenuIndex == 2,
+                        onTap: () => _onMenuSelected(2),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                      TvSidebarItem(
+                        icon: Icons.favorite,
+                        label: "Favorit",
+                        isSelected: _selectedMenuIndex == 3,
+                        onTap: () => _onMenuSelected(3),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                      TvSidebarItem(
+                        icon: Icons.person,
+                        label: "Profile",
+                        isSelected: _selectedMenuIndex == 4,
+                        onTap: () => _onMenuSelected(4),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                      TvSidebarItem(
+                        icon: Icons.search,
+                        label: "Search",
+                        isSelected: _selectedMenuIndex == 5,
+                        onTap: () => _onMenuSelected(5),
+                        onRequestFocusContent: _focusContentGrid,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-                          // Daftar Drama Baris Horizontal
-                          const Text(
-                            'Koleksi Drama China Terpopuler',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+          // ================= AREA KONTEN UTAMA KANAN =================
+          Expanded(
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(28.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "DRAMA POPULER",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
                           ),
-                          const SizedBox(height: 16),
-
-                          SizedBox(
-                            height: 280,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
+                        ),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: Focus(
+                            focusNode: _gridFocusNode,
+                            onKeyEvent: (node, event) {
+                              if (event is KeyDownEvent) {
+                                // Jika di paling kiri grid, tekan kiri (←) untuk kembali ke sidebar
+                                if (event.logicalKey == LogicalKeyboardKey.arrowLeft && (_focusedGridIndex % 3 == 0)) {
+                                  // Kosongkan fokus grid agar berpindah kembali ke item sidebar
+                                  FocusScope.of(context).previousFocus();
+                                  return KeyEventResult.handled;
+                                }
+                              }
+                              return KeyEventResult.ignored;
+                            },
+                            child: GridView.builder(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 1.4,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
                               itemCount: _dramas.length,
                               itemBuilder: (context, index) {
                                 final drama = _dramas[index];
-                                final isFocused = _focusedIndex == index;
+                                final isFocused = _gridFocusNode.hasFocus && _focusedGridIndex == index;
 
                                 return InkWell(
                                   onFocusChange: (hasFocus) {
                                     if (hasFocus) {
                                       setState(() {
-                                        _focusedIndex = index;
+                                        _focusedGridIndex = index;
                                       });
                                     }
                                   },
-                                  onTap: () { Navigator.push(context, MaterialPageRoute(builder: (context) => TvDetail(drama: drama))); },
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => TvDetail(drama: drama),
+                                      ),
+                                    );
+                                  },
                                   child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: isFocused ? 190 : 170,
-                                    margin: const EdgeInsets.only(right: 24),
+                                    duration: const Duration(milliseconds: 150),
                                     decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
+                                      color: const Color(0xFF1E1B30),
+                                      borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: isFocused
-                                            ? const Color(0xFF00D9FF)
-                                            : Colors.transparent,
-                                        width: 3,
+                                        color: isFocused ? const Color(0xFF00D9FF) : Colors.white10,
+                                        width: isFocused ? 2.5 : 1,
                                       ),
                                       boxShadow: isFocused
                                           ? [
                                               BoxShadow(
-                                                color: const Color(0xFF00D9FF).withOpacity(0.4),
-                                                blurRadius: 15,
+                                                color: const Color(0xFF00D9FF).withOpacity(0.3),
+                                                blurRadius: 12,
                                                 spreadRadius: 2,
                                               )
                                             ]
                                           : [],
                                     ),
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(11),
                                       child: Stack(
                                         children: [
-                                          CachedNetworkImage(
-                                            imageUrl: drama.poster,
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                            height: double.infinity,
-                                          ),
+                                          // Placeholder Poster / Neon Background
                                           Container(
-                                            decoration: BoxDecoration(
+                                            decoration: const BoxDecoration(
                                               gradient: LinearGradient(
-                                                begin: Alignment.topCenter,
-                                                end: Alignment.bottomCenter,
-                                                colors: [
-                                                  Colors.transparent,
-                                                  Colors.black.withOpacity(0.85),
-                                                ],
+                                                colors: [Color(0xFF1E1B30), Color(0xFF0D0A1E)],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
                                               ),
                                             ),
                                           ),
                                           Positioned(
-                                            bottom: 16,
-                                            left: 16,
-                                            right: 16,
-                                            child: Text(
-                                              drama.title,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: Colors.white,
+                                            bottom: 0,
+                                            left: 0,
+                                            right: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(12),
+                                              color: Colors.black87,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    drama.title,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "Platform: ${drama.platform.toUpperCase()}",
+                                                    style: const TextStyle(
+                                                      color: Color(0xFF00D9FF),
+                                                      fontSize: 11,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                           ),
@@ -203,13 +313,13 @@ class _TvHomeState extends State<TvHome> {
                               },
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
-            ),
+          ),
+        ],
+      ),
     );
   }
 }
