@@ -1,3 +1,4 @@
+import "tv_detail.dart";
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models/drama_model.dart';
@@ -128,7 +129,7 @@ class _TvHomeState extends State<TvHome> {
                                       });
                                     }
                                   },
-                                  onTap: () {},
+                                  onTap: () { Navigator.push(context, MaterialPageRoute(builder: (context) => TvDetail(drama: drama))); },
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 200),
                                     width: isFocused ? 190 : 170,
