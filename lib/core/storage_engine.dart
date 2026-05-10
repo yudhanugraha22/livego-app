@@ -1,10 +1,10 @@
 import 'package:shared_preferences/shared_preferences.dart';
-class LiveStorage {
+class StorageEngine {
   static Future<void> save(String k, dynamic v) async {
     final p = await SharedPreferences.getInstance();
     if (v is String) p.setString(k, v); else if (v is bool) p.setBool(k, v);
   }
-  static Future<dynamic> get(String k, dynamic def) async {
+  static Future<dynamic> read(String k, dynamic def) async {
     final p = await SharedPreferences.getInstance();
     return p.get(k) ?? def;
   }

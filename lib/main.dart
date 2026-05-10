@@ -14,7 +14,7 @@ class LivegoApp extends StatelessWidget {
 class MainSwitcher extends StatelessWidget {
   const MainSwitcher({super.key});
   @override Widget build(BuildContext context) {
-    // DETEKSI OTOMATIS: Lebar > 900 dianggap TV (Landscape)
-    return MediaQuery.of(context).size.width > 900 ? const TVHomePage() : const MobileHomePage();
+    // Jika lebar layar > 900 pixel, kita anggap itu TV (Landscape mode)
+    return MediaQuery.of(context).size.width > 900 ? const TVHome() : const MobileHome();
   }
 }
