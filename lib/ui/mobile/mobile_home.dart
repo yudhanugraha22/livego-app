@@ -45,7 +45,7 @@ class _MobileHomeState extends State<MobileHome> {
         title: const Text(
           'LIVEGO',
           style: TextStyle(
-            fontWeight: FontWeight.black,
+            fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
             color: Color(0xFF00D9FF),
             shadows: [
@@ -195,7 +195,7 @@ class _MobileHomeState extends State<MobileHome> {
                                 width: double.infinity,
                                 height: double.infinity,
                                 placeholder: (context, url) => Container(
-                                  color: Colors.black24,
+                                  color: Colors.black26,
                                   child: const Center(
                                     child: CircularProgressIndicator(),
                                   ),

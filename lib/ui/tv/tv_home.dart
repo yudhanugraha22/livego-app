@@ -82,7 +82,7 @@ class _TvHomeState extends State<TvHome> {
                                 'LIVEGO',
                                 style: TextStyle(
                                   fontSize: 28,
-                                  fontWeight: FontWeight.black,
+                                  fontWeight: FontWeight.bold,
                                   letterSpacing: 3,
                                   color: Color(0xFF00D9FF),
                                 ),
