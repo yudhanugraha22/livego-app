@@ -1,10 +1,10 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'core/services/storage_service.dart';
+import 'ui/mobile/mobile_home.dart';
+import 'ui/tv/tv_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,34 +61,7 @@ class LiveGoApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F0C1B),
         primaryColor: const Color(0xFF00D9FF),
       ),
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.play_circle_fill,
-                size: 80,
-                color: Color(0xFF00D9FF),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                isTv ? 'LiveGo Android TV Edition' : 'LiveGo Mobile Edition',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Mempersiapkan Bioskop Premium Anda...',
-                style: TextStyle(color: Colors.white60),
-              ),
-            ],
-          ),
-        ),
-      ),
+      home: isTv ? const TvHome() : const MobileHome(),
     );
   }
 }
