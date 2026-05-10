@@ -1,7 +1,11 @@
-import 'storage_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/history_model.dart';
 
 class CacheService {
+  static const String _historyKeyPrefix = "history_";
+
+  // 1. Menyimpan riwayat tontonan
   static Future<void> saveHistory({
     required String dramaId,
     required String episodeId,
@@ -10,41 +14,45 @@ class CacheService {
     required int positionMs,
     required int durationMs,
   }) async {
-    final key = 'history_$dramaId';
-    // Format simpan: episodeId|platform|title|positionMs|durationMs
-    final data = '$episodeId|$platform|$title|$positionMs|$durationMs';
-    await StorageService.write(key, data);
+    final prefs = await SharedPreferences.getInstance();
+    final history = HistoryModel(
+      dramaId: dramaId,
+      episodeId: episodeId,
+      platform: platform,
+      title: title,
+      positionMs: positionMs,
+      durationMs: durationMs,
+      lastWatched: DateTime.now().millisecondsSinceEpoch,
+    );
+
+    await prefs.setString(
+      '$_historyKeyPrefix$dramaId',
+      jsonEncode(history.toJson()),
+    );
   }
 
+  // 2. Mengambil riwayat tontonan spesifik berdasarkan dramaId
   static Future<HistoryModel?> getHistory(String dramaId) async {
-    final key = 'history_$dramaId';
-    final rawData = StorageService.read(key);
-    if (rawData == null) return null;
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString('$_historyKeyPrefix$dramaId');
+    if (jsonStr == null) return null;
 
     try {
-      final parts = rawData.split('|');
-      if (parts.length < 5) return null;
-      return HistoryModel(
-        dramaId: dramaId,
-        episodeId: parts[0],
-        platform: parts[1],
-        title: parts[2],
-        positionMs: int.tryParse(parts[3]) ?? 0,
-        durationMs: int.tryParse(parts[4]) ?? 0,
-      );
-    } catch (e) {
+      return HistoryModel.fromJson(jsonDecode(jsonStr));
+    } catch (_) {
       return null;
     }
   }
 
+  // 3. Mengambil semua riwayat tontonan (Memperbaiki error getAllHistory)
   static Future<Map<String, HistoryModel>> getAllHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys();
     final Map<String, HistoryModel> historyMap = {};
 
     for (String key in keys) {
-      if (key.startsWith(_historyPrefix)) {
-        final dramaId = key.replaceFirst(_historyPrefix, "");
+      if (key.startsWith(_historyKeyPrefix)) {
+        final dramaId = key.replaceFirst(_historyKeyPrefix, "");
         final jsonStr = prefs.getString(key);
         if (jsonStr != null) {
           try {
@@ -54,5 +62,22 @@ class CacheService {
       }
     }
     return historyMap;
+  }
+
+  // 4. Menghapus satu riwayat drama
+  static Future<void> deleteHistory(String dramaId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('$_historyKeyPrefix$dramaId');
+  }
+
+  // 5. Menghapus seluruh riwayat tontonan (Memperbaiki error clearAllHistory)
+  static Future<void> clearAllHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    for (String key in keys) {
+      if (key.startsWith(_historyKeyPrefix)) {
+        await prefs.remove(key);
+      }
+    }
   }
 }
