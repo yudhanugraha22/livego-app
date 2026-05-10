@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import '../../core/services/cache_service.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 class AdaptiveVideoPlayer extends StatefulWidget {
   final String videoUrl;
@@ -71,6 +72,8 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
     // 4. Tambahkan listener untuk terus menyimpan progress tontonan secara berkala
     _videoPlayerController.addListener(_videoListener);
 
+    // Jaga layar tetap menyala selama pemutar video aktif
+    WakelockPlus.enable();
     setState(() {
       _isInitialized = true;
     });
@@ -99,6 +102,8 @@ class _AdaptiveVideoPlayerState extends State<AdaptiveVideoPlayer> {
     if (!widget.isTv) {
       SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     }
+    // Kembalikan pengaturan layar agar bisa tidur kembali
+    WakelockPlus.disable();
     _videoPlayerController.removeListener(_videoListener);
     _videoPlayerController.dispose();
     _chewieController?.dispose();

@@ -36,4 +36,23 @@ class CacheService {
       return null;
     }
   }
+
+  static Future<Map<String, HistoryModel>> getAllHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+    final Map<String, HistoryModel> historyMap = {};
+
+    for (String key in keys) {
+      if (key.startsWith(_historyPrefix)) {
+        final dramaId = key.replaceFirst(_historyPrefix, "");
+        final jsonStr = prefs.getString(key);
+        if (jsonStr != null) {
+          try {
+            historyMap[dramaId] = HistoryModel.fromJson(jsonDecode(jsonStr));
+          } catch (_) {}
+        }
+      }
+    }
+    return historyMap;
+  }
 }
