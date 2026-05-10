@@ -1,3 +1,4 @@
+import "tv_settings.dart";
 import "tv_history.dart";
 import "tv_detail.dart";
 import 'package:flutter/material.dart';
@@ -64,8 +65,10 @@ class _TvHomeState extends State<TvHome> {
                       ),
                       const SizedBox(height: 32),
                       IconButton(
-                        icon: const Icon(Icons.favorite, color: Colors.white38, size: 28),
-                        onPressed: () {},
+                        icon: const Icon(Icons.settings, color: Colors.white38, size: 28),
+                        onPressed: () {
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const TvSettings()));
+                        },
                       ),
                     ],
                   ),

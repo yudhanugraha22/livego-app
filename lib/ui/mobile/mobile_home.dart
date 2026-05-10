@@ -1,3 +1,4 @@
+import "mobile_settings.dart";
 import "mobile_history.dart";
 import "mobile_detail.dart";
 import 'package:flutter/material.dart';
@@ -65,6 +66,10 @@ class _MobileHomeState extends State<MobileHome> {
           IconButton(
             icon: const Icon(Icons.history, color: Colors.white),
             onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => const MobileHistory())); },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () { Navigator.push(context, MaterialPageRoute(builder: (context) => const MobileSettings())); },
           ),
         ],
       ),
