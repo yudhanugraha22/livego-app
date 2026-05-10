@@ -10,7 +10,7 @@ class TVPlayer extends StatelessWidget {
       decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(35), border: Border.all(color: Colors.cyanAccent, width: 2.5)),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         VideoProgressIndicator(v, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.pinkAccent)),
-        const SizedBox(height: 20),
+        const SizedBox(height: 15),
         Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
           const Icon(Icons.skip_previous, color: Colors.white70),
           TVButton(onTap: ()=>v.value.isPlaying?v.pause():v.play(), child: Icon(v.value.isPlaying?Icons.pause:Icons.play_arrow, size: 50, color: Colors.white)),

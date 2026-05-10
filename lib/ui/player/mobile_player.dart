@@ -5,11 +5,11 @@ class MobilePlayer extends StatelessWidget {
   const MobilePlayer({super.key, required this.v, required this.title, required this.onToggle});
   @override Widget build(BuildContext context) {
     return Container(color: Colors.black45, child: Column(children: [
-      AppBar(backgroundColor: Colors.transparent, title: Text(title, style: const TextStyle(fontSize: 14))),
+      AppBar(backgroundColor: Colors.transparent, title: Text(title)),
       const Spacer(),
       IconButton(icon: Icon(v.value.isPlaying?Icons.pause_circle:Icons.play_circle, size: 80, color: Colors.white60), onPressed: onToggle),
       const Spacer(),
-      Padding(padding: const EdgeInsets.all(20), child: VideoProgressIndicator(v, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.redAccent))),
+      VideoProgressIndicator(v, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.redAccent)),
     ]));
   }
 }

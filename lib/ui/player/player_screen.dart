@@ -3,7 +3,6 @@ import 'package:video_player/video_player.dart';
 import '../../core/api_engine.dart';
 import 'mobile_player.dart';
 import 'tv_player.dart';
-
 class LivegoPlayer extends StatefulWidget {
   final String id, source, title;
   const LivegoPlayer({super.key, required this.id, required this.source, required this.title});
@@ -22,7 +21,7 @@ class _LivegoPlayerState extends State<LivegoPlayer> {
   @override void dispose() { _v?.dispose(); super.dispose(); }
   @override Widget build(BuildContext context) {
     bool isTV = MediaQuery.of(context).size.width > 900;
-    return Scaffold(backgroundColor: Colors.black, body: !ready ? const Center(child: CircularProgressIndicator(color: Colors.blueAccent)) : Stack(children: [
+    return Scaffold(backgroundColor: Colors.black, body: !ready ? const Center(child: CircularProgressIndicator()) : Stack(children: [
       Center(child: AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!))),
       isTV ? TVPlayer(v: _v!, title: widget.title) : MobilePlayer(v: _v!, title: widget.title, onToggle: ()=>setState((){ _v!.value.isPlaying?_v!.pause():_v!.play(); })),
     ]));
