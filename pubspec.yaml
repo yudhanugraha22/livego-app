@@ -1,41 +1,18 @@
-name: livego_project
-description: "Livego - Bioskop Drama China Premium untuk HP dan TV."
-publish_to: 'none'
+name: livego_streaming
 version: 1.0.0+1
-
 environment:
   sdk: '>=3.0.0 <4.0.0'
-
 dependencies:
-  wakelock_plus: ^1.2.8
   flutter:
     sdk: flutter
-  
-  # State Management
   flutter_riverpod: ^2.5.1
-  
-  # Koneksi Data & Keamanan (HMAC-SHA256)
   http: ^1.1.0
-  crypto: ^3.0.3
-  
-  # Penyimpanan Permanen
+  sqflite: ^2.3.0 # Room Database equivalent
+  path: ^1.8.3
   shared_preferences: ^2.2.2
-  
-  # Mesin Pemutar Video
   video_player: ^2.8.1
-  chewie: ^1.7.1
-  
-  # Performa & Gambar
-  cached_network_image: ^3.3.1
   path_provider: ^2.1.1
-  
-  # Deteksi Perangkat
-  device_info_plus: ^9.0.2
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
-
+  crypto: ^3.0.3
+  cached_network_image: ^3.3.1 # Coil equivalent
 flutter:
   uses-material-design: true
