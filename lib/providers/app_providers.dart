@@ -9,8 +9,8 @@ final dramasProvider = FutureProvider<List>((ref) async {
   final res = await ApiEngine.request(p);
   return res != null ? res['data'] : [];
 });
-final bannerProvider = FutureProvider<Map?>((ref) async {
+final bannerProvider = FutureProvider<List>((ref) async {
   final plat = ref.watch(platformProvider);
   final res = await ApiEngine.request("/api/v2/banner?category_p=$plat&lang=id");
-  return (res != null && res['data'].isNotEmpty) ? res['data'][0] : null;
+  return (res != null && res['data'].isNotEmpty) ? res['data'] : [];
 });

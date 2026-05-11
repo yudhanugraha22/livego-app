@@ -13,10 +13,10 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void initState() { super.initState(); _init(); }
   _init() async {
     final res = await ApiEngine.request("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=1&lang=id");
-    if (res != null) {
-      _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
-      _v!.addListener(()=>setState((){}));
-    }
+    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4";
+    if (res != null) url = res['data']['streams'][0]['url'];
+    _v = VideoPlayerController.networkUrl(Uri.parse(url))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
+    _v!.addListener(()=>setState((){}));
   }
   _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
@@ -24,14 +24,16 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
     bool isT = MediaQuery.of(context).size.width > 900;
     return Scaffold(backgroundColor: Colors.black, body: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
       Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator(color: Color(0xFF00D9FF))),
-      if (ui && ready) Positioned(bottom: 30, left: isT?60:20, right: isT?60:20, child: Container(
-        padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: const Color(0xFF00D9FF).withOpacity(0.3))),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.red, backgroundColor: Colors.white12)),
-          const SizedBox(height: 15),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [const Icon(Icons.skip_previous), Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow, size: 40, color: Colors.white), const Icon(Icons.skip_next), const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)), const Icon(Icons.list)])
-        ]),
-      )),
+      if (ui && ready) _buildOverlay(isT),
     ])));
   }
+  Widget _buildOverlay(bool isT) => Positioned(bottom: 30, left: isT?60:20, right: isT?60:20, child: Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: const Color(0xFF00D9FF).withOpacity(0.3))),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.red, backgroundColor: Colors.white12)),
+      const SizedBox(height: 15),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [Icon(Icons.skip_previous), Icon(Icons.play_arrow, size: 40), Icon(Icons.skip_next), Text("AUTO"), Icon(Icons.list)])
+    ]),
+  ));
 }
