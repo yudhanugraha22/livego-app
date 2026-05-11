@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../providers/app_providers.dart';
-import '../../shared/widgets.dart';
-import '../widgets/tv_sidebar.dart';
+import '../../providers/app_providers.dart';
+import '../shared/widgets.dart';
 import '../player/player_screen.dart';
+
 class TVHome extends ConsumerStatefulWidget {
   const TVHome({super.key});
   @override ConsumerState<TVHome> createState() => _TVHomeState();
@@ -15,7 +15,7 @@ class _TVHomeState extends ConsumerState<TVHome> {
     final banner = ref.watch(bannerProvider);
     final selP = ref.watch(platformProvider);
     return Scaffold(backgroundColor: const Color(0xFF0D1117), body: Row(children: [
-      TVSidebar(sel: sideIdx, onSel: (i)=>setState(()=>sideIdx=i)),
+      _buildSidebar(),
       Expanded(child: SingleChildScrollView(child: Column(children: [
         banner.when(data: (d)=>d==null?const SizedBox():_b(d), loading: ()=>const SizedBox(height: 200), error: (_,__)=>const SizedBox()),
         _chips(ref, selP),
@@ -23,6 +23,11 @@ class _TVHomeState extends ConsumerState<TVHome> {
       ])))
     ]));
   }
+  Widget _buildSidebar() => Container(width: 80, color: const Color(0xFF161B22), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    TVButton(onTap: ()=>setState(()=>sideIdx=0), child: Icon(Icons.home, color: sideIdx==0?Colors.blue:Colors.grey)),
+    const SizedBox(height: 40),
+    TVButton(onTap: ()=>setState(()=>sideIdx=1), child: Icon(Icons.person, color: sideIdx==1?Colors.blue:Colors.grey)),
+  ]));
   Widget _b(Map d) => Container(margin: const EdgeInsets.all(20), height: 260, decoration: BoxDecoration(borderRadius: BorderRadius.circular(25), border: Border.all(color: Colors.white10)), child: Stack(children: [ClipRRect(borderRadius: BorderRadius.circular(25), child: Image.network(d['cover'], fit: BoxFit.cover, width: double.infinity)), Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(25), gradient: LinearGradient(begin: Alignment.centerRight, colors: [Colors.black.withOpacity(0.1), Colors.black.withOpacity(0.9)]))), Padding(padding: const EdgeInsets.all(30), child: Row(children: [Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [Text(d['title'], style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)), const SizedBox(height: 10), Text(d['synopsis']??"", maxLines: 2, style: const TextStyle(color: Colors.grey))])), const SizedBox(width: 20), ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(d['cover'], width: 150, fit: BoxFit.cover))]))]));
   Widget _chips(WidgetRef ref, String s) => SizedBox(height: 60, child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.only(left: 20), children: ["Melolo","FreeReels","FlickReels","RapidTV"].map((p)=>Padding(padding: const EdgeInsets.only(right: 15), child: TVButton(onTap: ()=>ref.read(platformProvider.notifier).state=p.toLowerCase(), child: Container(padding: const EdgeInsets.symmetric(horizontal: 30), alignment: Alignment.center, decoration: BoxDecoration(color: s==p.toLowerCase()?const Color(0xFF8B5CF6):Colors.white10, borderRadius: BorderRadius.circular(15)), child: Text(p, style: const TextStyle(fontWeight: FontWeight.bold)))))).toList()));
 }
