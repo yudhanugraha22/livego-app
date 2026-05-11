@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 class TVButton extends StatefulWidget {
   final Widget child; final VoidCallback onTap; final double radius;
-  const TVButton({super.key, required this.child, required this.onTap, this.radius = 18});
+  const TVButton({super.key, required this.child, required this.onTap, this.radius = 28});
   @override State<TVButton> createState() => _TVButtonState();
 }
 class _TVButtonState extends State<TVButton> {

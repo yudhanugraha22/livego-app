@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
 import '../../core/api_engine.dart';
@@ -21,23 +22,30 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   }
   _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
+
+  void _onKey(KeyEvent e) {
+    if (e is KeyDownEvent) {
+      setState(()=>ui=true); _startT();
+      final k = e.logicalKey;
+      if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) { _v!.value.isPlaying ? _v!.pause() : _v!.play(); }
+      else if (k == LogicalKeyboardKey.arrowRight) { _v!.seekTo(_v!.value.position + const Duration(seconds: 10)); }
+      else if (k == LogicalKeyboardKey.arrowLeft) { _v!.seekTo(_v!.value.position - const Duration(seconds: 10)); }
+    }
+  }
+
   @override Widget build(BuildContext context) {
-    bool isT = MediaQuery.of(context).size.width > 900;
-    return Scaffold(backgroundColor: Colors.black, body: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
+    return KeyboardListener(focusNode: FocusNode(), autofocus: true, onKeyEvent: _onKey, child: Scaffold(backgroundColor: Colors.black, body: Stack(children: [
       Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator(color: Color(0xFF00D9FF))),
-      if (ui && ready) _buildOverlay(isT),
+      if (ui && ready) _buildOverlay(),
     ])));
   }
-  Widget _buildOverlay(bool isT) => Stack(children: [
-    Positioned(top: 40, left: 20, child: Row(children: [IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: ()=>Navigator.pop(context)), Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold))])),
-    Positioned(bottom: 30, left: isT?60:20, right: isT?60:20, child: Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(28), border: Border.all(color: Colors.white12)),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.redAccent, backgroundColor: Colors.white12)),
-        const SizedBox(height: 15),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [Icon(Icons.skip_previous), Icon(Icons.play_arrow, size: 40), Icon(Icons.skip_next), Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)), Icon(Icons.subtitles), Icon(Icons.settings), Icon(Icons.fullscreen)])
-      ]),
-    )),
-  ]);
+  Widget _buildOverlay() => Positioned(bottom: 30, left: 40, right: 40, child: Container(
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(color: const Color(0xFF0D2A4F).withOpacity(0.9), borderRadius: BorderRadius.circular(30), border: Border.all(color: const Color(0xFF00D9FF).withOpacity(0.3))),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.redAccent, backgroundColor: Colors.white12)),
+      const SizedBox(height: 15),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [const Icon(Icons.skip_previous), IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow), onPressed: (){ setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play()); }), const Icon(Icons.skip_next), const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)), const Icon(Icons.list)])
+    ]),
+  ));
 }
