@@ -1,22 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/api/api_engine.dart';
-
+import '../core/api_engine.dart';
 final platformProvider = StateProvider<String>((ref) => "melolo");
 final categoryProvider = StateProvider<String>((ref) => "Dubbing");
-
-final homeDataProvider = FutureProvider<List>((ref) async {
+final dramasProvider = FutureProvider<List>((ref) async {
   final plat = ref.watch(platformProvider);
   final cat = ref.watch(categoryProvider);
-  String path = (cat == "Dubbing") 
-    ? "/api/v2/search?category_p=$plat&q=sulih suara&lang=id" 
-    : "/api/v2/home?category_p=$plat&lang=id";
-  final res = await ApiEngine.request(path);
+  String p = (cat == "Dubbing") ? "/api/v2/search?category_p=$plat&q=sulih suara&lang=id" : "/api/v2/home?category_p=$plat&lang=id";
+  final res = await ApiEngine.request(p);
   return res != null ? res['data'] : [];
 });
-
 final bannerProvider = FutureProvider<Map?>((ref) async {
   final plat = ref.watch(platformProvider);
   final res = await ApiEngine.request("/api/v2/banner?category_p=$plat&lang=id");
-  if (res != null && res['data'].isNotEmpty) return res['data'][0];
-  return null;
+  return (res != null && res['data'].isNotEmpty) ? res['data'][0] : null;
 });
