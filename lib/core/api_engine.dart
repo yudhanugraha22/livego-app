@@ -1,27 +1,27 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
-import 'storage.dart';
 
 class ApiEngine {
   static const String secret = "22dfb2b849814054af0491ff2ee3ffe33989313d7d38e97aae659757a4cf8960";
-  static Future<dynamic> request(String path, {bool useCache = true}) async {
-    // Logika Cache API (TTL 30 Menit)
-    if (useCache) {
-      final cached = await LiveStorage.read('cache_$path', null);
-      if (cached != null) return json.decode(cached);
-    }
+  static const String baseUrl = "https://api-drama.dobda.id";
 
+  static Future<dynamic> request(String path) async {
     String ts = DateTime.now().millisecondsSinceEpoch.toString();
-    var sig = Hmac(sha256, utf8.encode(secret)).convert(utf8.encode("GET:$path:$ts"));
+    // Rumus Signature V2: METHOD:PATH:TIMESTAMP
+    String payload = "GET:$path:$ts";
+    var key = utf8.encode(secret);
+    var bytes = utf8.encode(payload);
+    var sig = Hmac(sha256, key).convert(bytes);
+
     try {
-      final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), 
-      headers: {"X-Timestamp": ts, "X-Signature": sig.toString(), "Accept": "application/json"});
-      if (r.statusCode == 200) {
-        if (useCache) LiveStorage.save('cache_$path', r.body);
-        return json.decode(r.body);
-      }
+      final r = await http.get(Uri.parse("$baseUrl$path"), 
+      headers: {
+        "X-Timestamp": ts, 
+        "X-Signature": sig.toString(),
+        "Accept": "application/json"
+      });
+      return r.statusCode == 200 ? json.decode(r.body) : null;
     } catch (e) { return null; }
-    return null;
   }
 }
