@@ -15,7 +15,7 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void initState() { super.initState(); _init(); }
   _init() async {
     final res = await ApiEngine.request("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=1&lang=id");
-    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"; // VIDEO TEST FALLBACK
+    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4";
     if (res != null && res['success'] == true) url = res['data']['streams'][0]['url'];
     _v = VideoPlayerController.networkUrl(Uri.parse(url))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
     _v!.addListener(()=>setState((){}));
@@ -47,9 +47,9 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
       VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.red, backgroundColor: Colors.white12)),
       const SizedBox(height: 15),
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        IconButton(icon: Icon(Icons.skip_previous, color: Colors.white), onPressed: (){}),
+        const Icon(Icons.skip_previous, color: Colors.white),
         IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow, size: 40, color: Colors.white), onPressed: (){ setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play()); }),
-        IconButton(icon: Icon(Icons.skip_next, color: Colors.white), onPressed: (){}),
+        const Icon(Icons.skip_next, color: Colors.white),
         const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)),
         const Icon(Icons.list, color: Colors.white),
       ])
