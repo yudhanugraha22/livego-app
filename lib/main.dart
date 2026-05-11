@@ -1,20 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'ui/mobile/mobile_home.dart';
-import 'ui/tv/tv_home.dart';
-void main() { WidgetsFlutterBinding.ensureInitialized(); runApp(const ProviderScope(child: LivegoApp())); }
-class LivegoApp extends StatelessWidget {
-  const LivegoApp({super.key});
-  @override Widget build(BuildContext context) { return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: const MainSwitcher()); }
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: LiveGoApp()));
 }
-class MainSwitcher extends StatefulWidget {
-  const MainSwitcher({super.key});
-  @override State<MainSwitcher> createState() => _MainSwitcherState();
+
+class LiveGoApp extends StatelessWidget {
+  const LiveGoApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: const SplashScreen(),
+    );
+  }
 }
-class _MainSwitcherState extends State<MainSwitcher> {
-  int _idx = 0;
-  @override Widget build(BuildContext context) {
-    bool isT = MediaQuery.of(context).size.width > 900;
-    return isT ? TVHome() : MobileHome();
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (c) => const MobileHome()));
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(child: Image.asset('assets/logo.png', width: 150, errorBuilder: (c,e,s) => const Icon(Icons.play_circle_fill, size: 100, color: Color(0xFF00D9FF)))),
+    );
   }
 }
