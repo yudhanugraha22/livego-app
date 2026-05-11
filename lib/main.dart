@@ -7,7 +7,14 @@ class LivegoApp extends StatelessWidget {
   const LivegoApp({super.key});
   @override Widget build(BuildContext context) { return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: const MainSwitcher()); }
 }
-class MainSwitcher extends StatelessWidget {
+class MainSwitcher extends StatefulWidget {
   const MainSwitcher({super.key});
-  @override Widget build(BuildContext context) { return MediaQuery.of(context).size.width > 900 ? const TVHome() : const MobileHome(); }
+  @override State<MainSwitcher> createState() => _MainSwitcherState();
+}
+class _MainSwitcherState extends State<MainSwitcher> {
+  int _idx = 0;
+  @override Widget build(BuildContext context) {
+    bool isT = MediaQuery.of(context).size.width > 900;
+    return isT ? TVHome() : MobileHome();
+  }
 }
