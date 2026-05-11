@@ -4,9 +4,5 @@ import 'ui/mobile/mobile_home.dart';
 void main() { WidgetsFlutterBinding.ensureInitialized(); runApp(const ProviderScope(child: LivegoApp())); }
 class LivegoApp extends StatelessWidget {
   const LivegoApp({super.key});
-  @override Widget build(BuildContext context) { return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: const MainSwitcher()); }
-}
-class MainSwitcher extends StatelessWidget {
-  const MainSwitcher({super.key});
-  @override Widget build(BuildContext context) { return MobileHome(); }
+  @override Widget build(BuildContext context) => MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: const MobileHome());
 }

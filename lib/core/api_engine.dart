@@ -8,8 +8,8 @@ class ApiEngine {
     var sig = Hmac(sha256, utf8.encode(secret)).convert(utf8.encode("GET:$path:$ts"));
     try {
       final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), 
-      headers: {"X-Timestamp": ts, "X-Signature": sig.toString(), "Accept": "application/json"}).timeout(Duration(seconds: 10));
-      return r.statusCode == 200 ? json.decode(r.body) : null;
-    } catch (e) { return null; }
+      headers: {"X-Timestamp": ts, "X-Signature": sig.toString(), "Accept": "application/json"}).timeout(const Duration(seconds: 10));
+      return r.statusCode == 200 ? json.decode(r.body) : {"success": false, "message": "Status ${r.statusCode}"};
+    } catch (e) { return {"success": false, "message": e.toString()}; }
   }
 }
