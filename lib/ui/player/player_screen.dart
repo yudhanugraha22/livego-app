@@ -15,7 +15,7 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void initState() { super.initState(); _init(); }
   _init() async {
     final res = await ApiEngine.request("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=1&lang=id");
-    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"; // VIDEO TEST
+    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4";
     if (res != null && res['success'] == true) url = res['data']['streams'][0]['url'];
     _v = VideoPlayerController.networkUrl(Uri.parse(url))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
     _v!.addListener(()=>setState((){}));
@@ -24,10 +24,10 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
   @override Widget build(BuildContext context) {
     bool isT = MediaQuery.of(context).size.width > 900;
-    return Scaffold(backgroundColor: Colors.black, body: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
+    return Scaffold(backgroundColor: Colors.black, body: Stack(children: [
       Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator(color: Color(0xFF00D9FF))),
       if (ui && ready) _buildOverlay(isT),
-    ])));
+    ]));
   }
   Widget _buildOverlay(bool isT) => Positioned(bottom: 30, left: isT?60:20, right: isT?60:20, child: Container(
     padding: const EdgeInsets.all(20),
@@ -36,9 +36,9 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
       VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.red, backgroundColor: Colors.white12)),
       const SizedBox(height: 15),
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        IconButton(icon: const Icon(Icons.skip_previous, color: Colors.white), onPressed: (){}),
+        IconButton(icon: Icon(Icons.skip_previous, color: Colors.white), onPressed: (){}),
         IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow, size: 40, color: Colors.white), onPressed: (){ setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play()); }),
-        IconButton(icon: const Icon(Icons.skip_next, color: Colors.white), onPressed: (){}),
+        IconButton(icon: Icon(Icons.skip_next, color: Colors.white), onPressed: (){}),
         const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)),
         const Icon(Icons.list, color: Colors.white),
       ])
