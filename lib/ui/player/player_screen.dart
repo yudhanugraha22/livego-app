@@ -43,7 +43,7 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.redAccent, backgroundColor: Colors.white12)),
       const SizedBox(height: 15),
-      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [const Icon(Icons.skip_previous), IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow), onPressed: (){ setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play()); }), const Icon(Icons.skip_next), const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10)), const Icon(Icons.list)])
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: const [Icon(Icons.skip_previous), Icon(Icons.play_arrow, size: 40), Icon(Icons.skip_next), Text("AUTO"), Icon(Icons.list)])
     ]),
   ));
 }
