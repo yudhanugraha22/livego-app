@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
 import '../../../core/api_engine.dart';
-import '../shared/widgets.dart';
-
 class LiveGoPlayer extends StatefulWidget {
   final String id, source, title;
   const LiveGoPlayer({super.key, required this.id, required this.source, required this.title});
@@ -15,10 +13,7 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void initState() { super.initState(); _init(); }
   _init() async {
     final res = await ApiEngine.request("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=1&lang=id");
-    if (res != null) {
-      _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
-      _v!.addListener(()=>setState((){}));
-    }
+    if (res != null) { _v = VideoPlayerController.networkUrl(Uri.parse(res['data']['streams'][0]['url']))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); }); _v!.addListener(()=>setState((){})); }
   }
   _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
