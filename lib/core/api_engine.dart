@@ -9,7 +9,7 @@ class ApiEngine {
     try {
       final r = await http.get(Uri.parse("https://api-drama.dobda.id$path"), 
       headers: {"X-Timestamp": ts, "X-Signature": sig.toString(), "Accept": "application/json"}).timeout(const Duration(seconds: 10));
-      return r.statusCode == 200 ? json.decode(r.body) : {"success": false, "message": "Status ${r.statusCode}"};
-    } catch (e) { return {"success": false, "message": e.toString()}; }
+      return r.statusCode == 200 ? json.decode(r.body) : null;
+    } catch (e) { return null; }
   }
 }
