@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/app_providers.dart';
-import '../shared/widgets.dart';
+import '../../shared/widgets.dart';
 import 'widgets/tv_sidebar.dart';
 import '../player/player_screen.dart';
 class TVHome extends ConsumerStatefulWidget {
