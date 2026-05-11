@@ -15,27 +15,16 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
   @override void initState() { super.initState(); _init(); }
   _init() async {
     final res = await ApiEngine.request("/api/v2/video?category_p=${widget.source}&id=${widget.id}&chapterId=1&lang=id");
-    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4";
+    String url = "https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4"; // VIDEO TEST
     if (res != null && res['success'] == true) url = res['data']['streams'][0]['url'];
     _v = VideoPlayerController.networkUrl(Uri.parse(url))..initialize().then((_){ setState((){ ready=true; _v!.play(); _startT(); }); });
     _v!.addListener(()=>setState((){}));
   }
   _startT() { _t?.cancel(); _t = Timer(const Duration(seconds: 5), () { if(mounted) setState(()=>ui=false); }); }
   @override void dispose() { _v?.dispose(); _t?.cancel(); super.dispose(); }
-
-  void _onKey(KeyEvent e) {
-    if (e is KeyDownEvent) {
-      setState(()=>ui=true); _startT();
-      final k = e.logicalKey;
-      if (k == LogicalKeyboardKey.select || k == LogicalKeyboardKey.enter) { _v!.value.isPlaying ? _v!.pause() : _v!.play(); }
-      else if (k == LogicalKeyboardKey.arrowRight) { _v!.seekTo(_v!.value.position + const Duration(seconds: 10)); }
-      else if (k == LogicalKeyboardKey.arrowLeft) { _v!.seekTo(_v!.value.position - const Duration(seconds: 10)); }
-    }
-  }
-
   @override Widget build(BuildContext context) {
     bool isT = MediaQuery.of(context).size.width > 900;
-    return KeyboardListener(focusNode: FocusNode(), autofocus: true, onKeyEvent: _onKey, child: Scaffold(backgroundColor: Colors.black, body: Stack(children: [
+    return Scaffold(backgroundColor: Colors.black, body: GestureDetector(onTap: (){ setState(()=>ui=!ui); if(ui) _startT(); }, child: Stack(children: [
       Center(child: ready ? AspectRatio(aspectRatio: _v!.value.aspectRatio, child: VideoPlayer(_v!)) : const CircularProgressIndicator(color: Color(0xFF00D9FF))),
       if (ui && ready) _buildOverlay(isT),
     ])));
@@ -47,9 +36,9 @@ class _LiveGoPlayerState extends State<LiveGoPlayer> {
       VideoProgressIndicator(_v!, allowScrubbing: true, colors: const VideoProgressColors(playedColor: Colors.red, backgroundColor: Colors.white12)),
       const SizedBox(height: 15),
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-        const Icon(Icons.skip_previous, color: Colors.white),
+        IconButton(icon: const Icon(Icons.skip_previous, color: Colors.white), onPressed: (){}),
         IconButton(icon: Icon(_v!.value.isPlaying?Icons.pause:Icons.play_arrow, size: 40, color: Colors.white), onPressed: (){ setState(()=>_v!.value.isPlaying?_v!.pause():_v!.play()); }),
-        const Icon(Icons.skip_next, color: Colors.white),
+        IconButton(icon: const Icon(Icons.skip_next, color: Colors.white), onPressed: (){}),
         const Text("AUTO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10, color: Colors.white)),
         const Icon(Icons.list, color: Colors.white),
       ])
